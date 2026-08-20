@@ -21,18 +21,27 @@ Dependency direction: `WebApi -> Infrastructure -> Application -> Domain`. Domai
 
 - .NET SDK 10.0.400+
 - PostgreSQL running locally (or via Docker)
-- `dotnet tool install -g dotnet-ef` (already installed on this machine)
+
+`dotnet-ef` is a **local tool** pinned in `.config/dotnet-tools.json` — no global install, no PATH setup, works identically on macOS/Linux/Windows. Restore it once per clone:
+
+```bash
+dotnet tool restore
+```
 
 ## First run
 
 ```bash
-# start postgres however you prefer, e.g.:
-docker run --name omnihogar-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=omnihogar -p 5432:5432 -d postgres:16
+# 1. restore local tools (dotnet-ef)
+dotnet tool restore
 
-# apply migrations
+# 2. start postgres however you prefer, e.g.:
+docker run --name omnihogar-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=omnihogar -p 5432:5432 -d postgres:16
+# (subsequent runs: docker start omnihogar-db)
+
+# 3. apply migrations — note: `dotnet ef`, not `dotnet-ef`
 dotnet ef database update --project src/OmniHogar.Infrastructure --startup-project src/OmniHogar.WebApi
 
-# run the API
+# 4. run the API
 dotnet run --project src/OmniHogar.WebApi
 ```
 
