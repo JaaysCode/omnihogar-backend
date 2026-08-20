@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OmniHogar.Application/OmniHogar.Application.csproj" />
+    <Project Path="src/OmniHogar.Domain/OmniHogar.Domain.csproj" />
+    <Project Path="src/OmniHogar.Infrastructure/OmniHogar.Infrastructure.csproj" />
+    <Project Path="src/OmniHogar.WebApi/OmniHogar.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OmniHogar.Application.Tests/OmniHogar.Application.Tests.csproj" />
+    <Project Path="tests/OmniHogar.Domain.Tests/OmniHogar.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

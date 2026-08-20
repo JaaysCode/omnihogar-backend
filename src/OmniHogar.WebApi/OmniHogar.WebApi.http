@@ -1,0 +1,6 @@
+@OmniHogar.WebApi_HostAddress = http://localhost:5244
+
+GET {{OmniHogar.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
