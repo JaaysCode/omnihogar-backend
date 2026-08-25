@@ -6,16 +6,18 @@ using OmniHogar.Domain.Exceptions;
 
 namespace OmniHogar.Application.Features.Products;
 
-public record UpdateProductCommand(Guid Id, string Name, string? Description, decimal Price, int Stock)
+public record UpdateProductCommand(Guid Id, string Sku, string Name, string? Description, Guid? CategoryId, decimal Price, string? ImageUrl, string Status)
     : IRequest;
 
 public class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
     public UpdateProductCommandValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Sku).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Stock).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Status).Must(s => s is "active" or "discontinued")
+            .WithMessage("Status must be 'active' or 'discontinued'.");
     }
 }
 
@@ -38,11 +40,13 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
             throw new NotFoundException(nameof(Domain.Entities.Product), request.Id);
         }
 
+        product.Sku = request.Sku;
         product.Name = request.Name;
         product.Description = request.Description;
+        product.CategoryId = request.CategoryId;
         product.Price = request.Price;
-        product.Stock = request.Stock;
-        product.UpdatedAtUtc = DateTime.UtcNow;
+        product.ImageUrl = request.ImageUrl;
+        product.Status = request.Status;
 
         await _context.SaveChangesAsync(cancellationToken);
     }

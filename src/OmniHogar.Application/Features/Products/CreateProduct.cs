@@ -5,16 +5,16 @@ using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Application.Features.Products;
 
-public record CreateProductCommand(string Name, string? Description, decimal Price, int Stock)
+public record CreateProductCommand(string Sku, string Name, string? Description, Guid? CategoryId, decimal Price, string? ImageUrl)
     : IRequest<Guid>;
 
 public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
     public CreateProductCommandValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Sku).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Stock).GreaterThanOrEqualTo(0);
     }
 }
 
@@ -31,10 +31,12 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
     {
         var product = new Product
         {
+            Sku = request.Sku,
             Name = request.Name,
             Description = request.Description,
+            CategoryId = request.CategoryId,
             Price = request.Price,
-            Stock = request.Stock,
+            ImageUrl = request.ImageUrl,
         };
 
         _context.Products.Add(product);

@@ -1,9 +1,9 @@
-using System.Security.Claims;
+using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Infrastructure.Identity;
 
 public interface ITokenService
 {
-    string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles);
+    string GenerateAccessToken(User user, IEnumerable<string> roles);
     string GenerateRefreshToken();
 }

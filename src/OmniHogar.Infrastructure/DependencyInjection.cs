@@ -1,7 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,16 +24,10 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        services
-            .AddIdentityCore<ApplicationUser>(options =>
-            {
-                options.Password.RequiredLength = 8;
-                options.User.RequireUniqueEmail = true;
-            })
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddSignInManager()
-            .AddDefaultTokenProviders();
+        // Auth: users/roles/permissions come from our own tables (see Domain.Entities.User/Role/Permission),
+        // not ASP.NET Core Identity. Password hashing goes through PasswordHasher<User> directly.
+        services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<Domain.Entities.User>,
+            Microsoft.AspNetCore.Identity.PasswordHasher<Domain.Entities.User>>();
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddScoped<ITokenService, TokenService>();

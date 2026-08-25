@@ -1,6 +1,6 @@
 namespace OmniHogar.WebApi.Contracts;
 
-public record RegisterRequest(string Email, string Password, string? FullName);
+public record RegisterRequest(string Email, string Password, string FirstName, string LastName, string? Phone);
 
 public record LoginRequest(string Email, string Password);
 

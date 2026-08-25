@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Infrastructure.Identity;
 
@@ -16,14 +17,15 @@ public class TokenService : ITokenService
         _jwtSettings = jwtSettings.Value;
     }
 
-    public string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles)
+    public string GenerateAccessToken(User user, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id),
-            new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.Name, user.UserName ?? string.Empty),
+            new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}".Trim()),
+            new("user_type", user.UserType),
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));

@@ -9,6 +9,7 @@ namespace OmniHogar.Application.Common.Interfaces;
 /// </summary>
 public interface IApplicationDbContext
 {
+    DbSet<User> Users { get; }
     DbSet<Product> Products { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
