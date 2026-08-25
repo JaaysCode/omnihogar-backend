@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using OmniHogar.Application;
 using OmniHogar.Infrastructure;
+using OmniHogar.Infrastructure.Persistence;
 using OmniHogar.WebApi.Extensions;
 using OmniHogar.WebApi.Middleware;
 
@@ -14,6 +16,14 @@ builder.Services.AddOmniHogarSwagger();
 builder.Services.AddOmniHogarCors(builder.Configuration);
 
 var app = builder.Build();
+
+// Apply pending EF Core migrations on startup. Lets the Docker image bring up a
+// fresh database with zero manual steps. Disable with ApplyMigrationsOnStartup=false.
+if (app.Configuration.GetValue("ApplyMigrationsOnStartup", true))
+{
+    using var scope = app.Services.CreateScope();
+    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
