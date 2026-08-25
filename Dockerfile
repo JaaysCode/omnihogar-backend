@@ -13,6 +13,12 @@ RUN dotnet restore src/OmniHogar.WebApi/OmniHogar.WebApi.csproj
 COPY src/ src/
 RUN dotnet publish src/OmniHogar.WebApi/OmniHogar.WebApi.csproj -c Release -o /app --no-restore
 
+# --- dev stage (hot reload, source bind-mounted over /src at runtime) ---
+FROM build AS dev
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+CMD ["dotnet", "watch", "run", "--no-launch-profile", "--project", "src/OmniHogar.WebApi/OmniHogar.WebApi.csproj"]
+
 # --- runtime stage ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
