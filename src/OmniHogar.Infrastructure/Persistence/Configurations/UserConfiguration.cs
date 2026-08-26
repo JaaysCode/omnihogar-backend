@@ -20,15 +20,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Email).HasColumnName("email").IsRequired().HasMaxLength(150);
         builder.Property(u => u.Phone).HasColumnName("phone").HasMaxLength(20);
         builder.Property(u => u.PasswordHash).HasColumnName("password_hash").IsRequired().HasMaxLength(255);
-        builder.Property(u => u.LocationId).HasColumnName("location_id");
+        builder.Property(u => u.FacilityId).HasColumnName("facility_id");
         builder.Property(u => u.Status).HasColumnName("status").IsRequired().HasDefaultValue(true);
         builder.Property(u => u.CreatedAt).HasColumnName("created_at").IsRequired().HasDefaultValueSql("now()");
 
         builder.HasIndex(u => u.Email).IsUnique();
 
-        builder.HasOne(u => u.Location)
+        builder.HasOne(u => u.Facility)
             .WithMany()
-            .HasForeignKey(u => u.LocationId)
+            .HasForeignKey(u => u.FacilityId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

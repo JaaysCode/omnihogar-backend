@@ -15,8 +15,8 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     /// <summary>Assigned facility, for employees.</summary>
-    public Guid? LocationId { get; set; }
-    public Facility? Location { get; set; }
+    public Guid? FacilityId { get; set; }
+    public Facility? Facility { get; set; }
 
     public bool Status { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -106,7 +106,7 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                     email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    location_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    facility_id = table.Column<Guid>(type: "uuid", nullable: true),
                     status = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
@@ -115,8 +115,8 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("PK_users", x => x.id);
                     table.CheckConstraint("CK_users_user_type", "user_type IN ('customer','employee')");
                     table.ForeignKey(
-                        name: "FK_users_facilities_location_id",
-                        column: x => x.location_id,
+                        name: "FK_users_facilities_facility_id",
+                        column: x => x.facility_id,
                         principalTable: "facilities",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
@@ -933,9 +933,9 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_location_id",
+                name: "IX_users_facility_id",
                 table: "users",
-                column: "location_id");
+                column: "facility_id");
         }
 
         /// <inheritdoc />
