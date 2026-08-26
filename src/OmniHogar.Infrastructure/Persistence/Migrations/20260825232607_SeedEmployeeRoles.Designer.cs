@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OmniHogar.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using OmniHogar.Infrastructure.Persistence;
 namespace OmniHogar.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825232607_SeedEmployeeRoles")]
+    partial class SeedEmployeeRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1164,10 +1167,6 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("email");
 
-                    b.Property<Guid?>("FacilityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("facility_id");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1179,6 +1178,10 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("location_id");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1208,7 +1211,7 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("FacilityId");
+                    b.HasIndex("LocationId");
 
                     b.ToTable("users", null, t =>
                         {
@@ -1575,12 +1578,12 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("OmniHogar.Domain.Entities.User", b =>
                 {
-                    b.HasOne("OmniHogar.Domain.Entities.Facility", "Facility")
+                    b.HasOne("OmniHogar.Domain.Entities.Facility", "Location")
                         .WithMany()
-                        .HasForeignKey("FacilityId")
+                        .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Facility");
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("OmniHogar.Domain.Entities.UserRole", b =>

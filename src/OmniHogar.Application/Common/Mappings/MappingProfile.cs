@@ -8,5 +8,6 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Product, Features.Products.ProductDto>();
+        CreateMap<Role, Features.Employees.RoleDto>();
     }
 }
