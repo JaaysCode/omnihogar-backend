@@ -30,8 +30,16 @@ public class ProductsController : ControllerBase
         return await _sender.Send(new GetProductByIdQuery(id), cancellationToken);
     }
 
+    /// <summary>Admin management list (HU-10) — every product, any status.</summary>
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<ProductDto>>> GetAllForAdmin(CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetAdminProductsQuery(), cancellationToken);
+    }
+
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Guid>> Create(CreateProductCommand command, CancellationToken cancellationToken)
     {
         var id = await _sender.Send(command, cancellationToken);
@@ -39,7 +47,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(Guid id, UpdateProductCommand command, CancellationToken cancellationToken)
     {
         if (id != command.Id)
@@ -52,7 +60,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteProductCommand(id), cancellationToken);
