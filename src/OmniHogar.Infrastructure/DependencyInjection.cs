@@ -28,7 +28,6 @@ public static class DependencyInjection
         // not ASP.NET Core Identity. Password hashing goes through PasswordHasher<User> directly.
         services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<Domain.Entities.User>,
             Microsoft.AspNetCore.Identity.PasswordHasher<Domain.Entities.User>>();
-        services.AddScoped<IPasswordHasher, Identity.PasswordHasherAdapter>();
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddScoped<ITokenService, TokenService>();

@@ -17,6 +17,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Product> Products => Set<Product>();
 
     // Bare-bones model: only what Register's handler/validator touch. Navigation
@@ -37,6 +39,18 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(p => p.Id);
             builder.Ignore(p => p.Category);
+        });
+
+        modelBuilder.Entity<Role>(builder =>
+        {
+            builder.HasKey(r => r.Id);
+            builder.Ignore(r => r.UserRoles);
+            builder.Ignore(r => r.RolePermissions);
+        });
+
+        modelBuilder.Entity<UserRole>(builder =>
+        {
+            builder.HasKey(ur => new { ur.UserId, ur.RoleId });
         });
     }
 
