@@ -57,7 +57,7 @@ public class RegisterCommandValidatorTests
         var result = await validator.TestValidateAsync(ValidCommand());
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
-            .WithErrorMessage("Email is already registered.");
+            .WithErrorMessage("El correo ya está registrado.");
     }
 
     [Fact]

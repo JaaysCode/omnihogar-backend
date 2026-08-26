@@ -56,13 +56,13 @@ public class AuthController : ControllerBase
 
         if (user is null || !user.Status)
         {
-            return Unauthorized(new { message = "Invalid credentials." });
+            return Unauthorized(new { message = "Credenciales inválidas." });
         }
 
         var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (verification == PasswordVerificationResult.Failed)
         {
-            return Unauthorized(new { message = "Invalid credentials." });
+            return Unauthorized(new { message = "Credenciales inválidas." });
         }
 
         return await BuildAuthResponse(user);

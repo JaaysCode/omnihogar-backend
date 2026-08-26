@@ -19,37 +19,37 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
     {
         RuleFor(x => x.Email)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Email format is invalid.")
-            .MaximumLength(150).WithMessage("Email must be at most 150 characters.")
+            .NotEmpty().WithMessage("El correo electrónico es obligatorio.")
+            .EmailAddress().WithMessage("El formato del correo electrónico no es válido.")
+            .MaximumLength(150).WithMessage("El correo electrónico debe tener como máximo 150 caracteres.")
             .MustAsync(async (email, cancellationToken) =>
             {
                 var normalized = email.Trim().ToLowerInvariant();
                 return !await context.Users.AnyAsync(u => u.Email.ToLower() == normalized, cancellationToken);
             })
-            .WithMessage("Email is already registered.");
+            .WithMessage("El correo ya está registrado.");
 
         RuleFor(x => x.Password)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Password is required.")
-            .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
-            .Matches("[A-Za-z]").WithMessage("Password must include at least one letter.")
-            .Matches("[0-9]").WithMessage("Password must include at least one number.");
+            .NotEmpty().WithMessage("La contraseña es obligatoria.")
+            .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres.")
+            .Matches("[A-Za-z]").WithMessage("La contraseña debe incluir al menos una letra.")
+            .Matches("[0-9]").WithMessage("La contraseña debe incluir al menos un número.");
 
         RuleFor(x => x.FirstName)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("First name is required.")
-            .MaximumLength(100).WithMessage("First name must be at most 100 characters.")
-            .Matches(NamePattern).WithMessage("First name can only contain letters.");
+            .NotEmpty().WithMessage("El nombre es obligatorio.")
+            .MaximumLength(100).WithMessage("El nombre debe tener como máximo 100 caracteres.")
+            .Matches(NamePattern).WithMessage("El nombre solo puede contener letras.");
 
         RuleFor(x => x.LastName)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Last name is required.")
-            .MaximumLength(100).WithMessage("Last name must be at most 100 characters.")
-            .Matches(NamePattern).WithMessage("Last name can only contain letters.");
+            .NotEmpty().WithMessage("El apellido es obligatorio.")
+            .MaximumLength(100).WithMessage("El apellido debe tener como máximo 100 caracteres.")
+            .Matches(NamePattern).WithMessage("El apellido solo puede contener letras.");
 
         RuleFor(x => x.Phone)
-            .Matches(PhonePattern).WithMessage("Phone format is invalid.")
+            .Matches(PhonePattern).WithMessage("El formato del teléfono no es válido.")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
     }
 }
