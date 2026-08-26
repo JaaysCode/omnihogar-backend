@@ -1,8 +1,11 @@
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OmniHogar.Application.Common.Interfaces;
+using OmniHogar.Application.Features.Auth;
 using OmniHogar.Domain.Entities;
 using OmniHogar.Infrastructure.Identity;
 using OmniHogar.WebApi.Contracts;
@@ -17,50 +20,39 @@ public class AuthController : ControllerBase
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ITokenService _tokenService;
     private readonly JwtSettings _jwtSettings;
+    private readonly ISender _sender;
 
     public AuthController(
         IApplicationDbContext context,
         IPasswordHasher<User> passwordHasher,
         ITokenService tokenService,
-        IOptions<JwtSettings> jwtSettings)
+        IOptions<JwtSettings> jwtSettings,
+        ISender sender)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
         _jwtSettings = jwtSettings.Value;
+        _sender = sender;
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponse>> Register(RegisterCommand command, CancellationToken cancellationToken)
     {
-        var emailTaken = await _context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken);
-        if (emailTaken)
-        {
-            ModelState.AddModelError(nameof(request.Email), "Email is already registered.");
-            return ValidationProblem(ModelState);
-        }
-
-        var user = new User
-        {
-            UserType = "customer",
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            Phone = request.Phone,
-        };
-        user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync(cancellationToken);
+        var userId = await _sender.Send(command, cancellationToken);
+        var user = await _context.Users.FirstAsync(u => u.Id == userId, cancellationToken);
 
         return await BuildAuthResponse(user);
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null || !user.Status)
         {
