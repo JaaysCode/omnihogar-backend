@@ -12,7 +12,7 @@ using OmniHogar.Infrastructure.Persistence;
 namespace OmniHogar.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260825232607_SeedEmployeeRoles")]
+    [Migration("20260825234000_SeedEmployeeRoles")]
     partial class SeedEmployeeRoles
     {
         /// <inheritdoc />
