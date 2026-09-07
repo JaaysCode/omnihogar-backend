@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Entities;
+using OmniHogar.Domain.Enums;
 using OmniHogar.Domain.Exceptions;
 
 namespace OmniHogar.Application.Features.Employees;
@@ -89,7 +90,7 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
 
         var employee = new User
         {
-            UserType = "employee",
+            UserType = UserType.employee,
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),

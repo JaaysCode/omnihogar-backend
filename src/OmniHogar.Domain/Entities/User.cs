@@ -1,3 +1,5 @@
+using OmniHogar.Domain.Enums;
+
 namespace OmniHogar.Domain.Entities;
 
 /// <summary>Customer or employee account (users).</summary>
@@ -5,8 +7,7 @@ public class User
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    /// <summary>Allowed: customer, employee.</summary>
-    public string UserType { get; set; } = string.Empty;
+    public UserType UserType { get; set; }
 
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
@@ -24,4 +25,5 @@ public class User
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public ICollection<CustomerAddress> Addresses { get; set; } = new List<CustomerAddress>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

@@ -14,7 +14,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
 
-        builder.Property(u => u.UserType).HasColumnName("user_type").IsRequired().HasMaxLength(20);
+        builder.Property(u => u.UserType).HasColumnName("user_type").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(u => u.FirstName).HasColumnName("first_name").IsRequired().HasMaxLength(100);
         builder.Property(u => u.LastName).HasColumnName("last_name").IsRequired().HasMaxLength(100);
         builder.Property(u => u.Email).HasColumnName("email").IsRequired().HasMaxLength(150);

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OmniHogar.Application.Features.Auth;
 using OmniHogar.Application.Tests.TestSupport;
 using OmniHogar.Domain.Entities;
+using OmniHogar.Domain.Enums;
 
 namespace OmniHogar.Application.Tests.Features.Auth;
 
@@ -23,7 +24,7 @@ public class RegisterCommandHandlerTests
         Assert.Equal("new.customer@example.com", stored.Email);
         Assert.Equal("Jane", stored.FirstName);
         Assert.Equal("Doe", stored.LastName);
-        Assert.Equal("customer", stored.UserType);
+        Assert.Equal(UserType.customer, stored.UserType);
         Assert.Equal("3001234567", stored.Phone);
         Assert.NotEqual(command.Password, stored.PasswordHash);
         Assert.Equal(

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Entities;
+using OmniHogar.Domain.Enums;
 
 namespace OmniHogar.Application.Features.Auth;
 
@@ -20,7 +21,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Guid>
     {
         var user = new User
         {
-            UserType = "customer",
+            UserType = UserType.customer,
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),

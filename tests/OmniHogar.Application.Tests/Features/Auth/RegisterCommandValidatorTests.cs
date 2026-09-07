@@ -2,6 +2,7 @@ using FluentValidation.TestHelper;
 using OmniHogar.Application.Features.Auth;
 using OmniHogar.Application.Tests.TestSupport;
 using OmniHogar.Domain.Entities;
+using OmniHogar.Domain.Enums;
 
 namespace OmniHogar.Application.Tests.Features.Auth;
 
@@ -47,7 +48,7 @@ public class RegisterCommandValidatorTests
             Email = "jane.doe@example.com",
             FirstName = "Existing",
             LastName = "User",
-            UserType = "customer",
+            UserType = UserType.customer,
             PasswordHash = "hash",
         });
         await context.SaveChangesAsync(CancellationToken.None);
@@ -69,7 +70,7 @@ public class RegisterCommandValidatorTests
             Email = "jane.doe@example.com",
             FirstName = "Existing",
             LastName = "User",
-            UserType = "customer",
+            UserType = UserType.customer,
             PasswordHash = "hash",
         });
         await context.SaveChangesAsync(CancellationToken.None);
