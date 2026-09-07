@@ -23,6 +23,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
@@ -36,6 +37,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.Ignore(u => u.Addresses);
             builder.Ignore(u => u.Orders);
             builder.Ignore(u => u.Facility);
+            builder.Ignore(u => u.RefreshTokens);
         });
 
         modelBuilder.Entity<Product>(builder =>
@@ -79,6 +81,12 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.HasKey(oi => oi.Id);
             builder.HasOne(oi => oi.Order).WithMany(o => o.Items).HasForeignKey(oi => oi.OrderId);
             builder.HasOne(oi => oi.Product).WithMany().HasForeignKey(oi => oi.ProductId);
+        });
+
+        modelBuilder.Entity<RefreshToken>(builder =>
+        {
+            builder.HasKey(rt => rt.Id);
+            builder.HasOne(rt => rt.User).WithMany().HasForeignKey(rt => rt.UserId);
         });
     }
 

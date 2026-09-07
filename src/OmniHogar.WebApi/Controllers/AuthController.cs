@@ -43,7 +43,7 @@ public class AuthController : ControllerBase
         var userId = await _sender.Send(command, cancellationToken);
         var user = await _context.Users.FirstAsync(u => u.Id == userId, cancellationToken);
 
-        return await BuildAuthResponse(user);
+        return await BuildAuthResponse(user, cancellationToken);
     }
 
     [HttpPost("login")]
@@ -65,20 +65,99 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Credenciales inválidas." });
         }
 
-        return await BuildAuthResponse(user);
+        return await BuildAuthResponse(user, cancellationToken);
     }
 
-    private async Task<AuthResponse> BuildAuthResponse(User user)
+    /// <summary>
+    /// Exchanges a still-valid refresh token for a new access/refresh pair (rotation): the
+    /// presented token is revoked and replaced, so it can never be redeemed a second time. If a
+    /// token that's already been rotated (or revoked) shows up again, every other active token
+    /// for that user is revoked too — that pattern only happens if a refresh token leaked and
+    /// both the legitimate client and an attacker tried to use it.
+    /// </summary>
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponse>> Refresh(RefreshRequest request, CancellationToken cancellationToken)
+    {
+        var tokenHash = _tokenService.HashRefreshToken(request.RefreshToken);
+
+        var presented = await _context.RefreshTokens
+            .Include(rt => rt.User)
+            .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash, cancellationToken);
+
+        if (presented is null || presented.ExpiresAt <= DateTime.UtcNow)
+        {
+            return Unauthorized(new { message = "Sesión expirada. Inicia sesión de nuevo." });
+        }
+
+        if (presented.RevokedAt is not null)
+        {
+            await RevokeAllActiveTokensAsync(presented.UserId, cancellationToken);
+            return Unauthorized(new { message = "Sesión inválida. Inicia sesión de nuevo." });
+        }
+
+        if (!presented.User.Status)
+        {
+            return Unauthorized(new { message = "Cuenta inactiva." });
+        }
+
+        var (rawRefreshToken, newEntity) = CreateRefreshToken(presented.UserId);
+        presented.RevokedAt = DateTime.UtcNow;
+        presented.ReplacedByTokenId = newEntity.Id;
+        _context.RefreshTokens.Add(newEntity);
+
+        var accessToken = await BuildAccessTokenAsync(presented.User, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var expiresAtUtc = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+        return new AuthResponse(accessToken, rawRefreshToken, expiresAtUtc);
+    }
+
+    private async Task RevokeAllActiveTokensAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var activeTokens = await _context.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<string> BuildAccessTokenAsync(User user, CancellationToken cancellationToken)
     {
         var roles = await _context.Users
             .Where(u => u.Id == user.Id)
             .SelectMany(u => u.UserRoles.Select(ur => ur.Role.Name))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        var accessToken = _tokenService.GenerateAccessToken(user, roles);
-        var refreshToken = _tokenService.GenerateRefreshToken();
+        return _tokenService.GenerateAccessToken(user, roles);
+    }
+
+    private (string RawToken, RefreshToken Entity) CreateRefreshToken(Guid userId)
+    {
+        var rawToken = _tokenService.GenerateRefreshToken();
+        var entity = new RefreshToken
+        {
+            UserId = userId,
+            TokenHash = _tokenService.HashRefreshToken(rawToken),
+            ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+        };
+        return (rawToken, entity);
+    }
+
+    private async Task<AuthResponse> BuildAuthResponse(User user, CancellationToken cancellationToken)
+    {
+        var accessToken = await BuildAccessTokenAsync(user, cancellationToken);
+        var (rawRefreshToken, entity) = CreateRefreshToken(user.Id);
+
+        _context.RefreshTokens.Add(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+
         var expiresAtUtc = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-
-        return new AuthResponse(accessToken, refreshToken, expiresAtUtc);
+        return new AuthResponse(accessToken, rawRefreshToken, expiresAtUtc);
     }
 }
