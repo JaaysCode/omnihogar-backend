@@ -20,8 +20,9 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
 
-    // Bare-bones model: only what Register's handler/validator touch. Navigation
+    // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
     // rather than fully mapped (this context intentionally doesn't model the whole schema).
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -51,6 +52,12 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<UserRole>(builder =>
         {
             builder.HasKey(ur => new { ur.UserId, ur.RoleId });
+        });
+
+        modelBuilder.Entity<ProductCategory>(builder =>
+        {
+            builder.HasKey(c => c.Id);
+            builder.Ignore(c => c.Products);
         });
     }
 
