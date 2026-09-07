@@ -17,6 +17,12 @@ public class EmployeesController : ControllerBase
         _sender = sender;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<EmployeeDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetEmployeesQuery(), cancellationToken);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Guid>> Create(CreateEmployeeCommand command, CancellationToken cancellationToken)
     {

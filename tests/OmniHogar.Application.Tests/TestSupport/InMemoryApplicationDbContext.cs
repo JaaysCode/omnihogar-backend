@@ -33,7 +33,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<User>(builder =>
         {
             builder.HasKey(u => u.Id);
-            builder.Ignore(u => u.UserRoles);
+            builder.HasMany(u => u.UserRoles).WithOne(ur => ur.User).HasForeignKey(ur => ur.UserId);
             builder.Ignore(u => u.Addresses);
             builder.Ignore(u => u.Orders);
             builder.Ignore(u => u.Facility);
@@ -49,7 +49,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<Role>(builder =>
         {
             builder.HasKey(r => r.Id);
-            builder.Ignore(r => r.UserRoles);
+            builder.HasMany(r => r.UserRoles).WithOne(ur => ur.Role).HasForeignKey(ur => ur.RoleId);
             builder.Ignore(r => r.RolePermissions);
         });
 

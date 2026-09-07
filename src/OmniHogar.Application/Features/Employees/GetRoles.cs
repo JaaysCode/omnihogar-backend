@@ -22,6 +22,7 @@ public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, List<RoleDto>
     public async Task<List<RoleDto>> Handle(GetRolesQuery request, CancellationToken cancellationToken)
     {
         return await _context.Roles
+            .AsNoTracking()
             .OrderBy(r => r.Name)
             .ProjectTo<RoleDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);

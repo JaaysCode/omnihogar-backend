@@ -11,6 +11,9 @@ public class MappingProfile : Profile
         CreateMap<ProductCategory, Features.Products.CategoryDto>();
         CreateMap<Role, Features.Employees.RoleDto>();
 
+        CreateMap<User, Features.Employees.EmployeeDto>()
+            .ForMember(d => d.RoleName, opt => opt.MapFrom(s => s.UserRoles.OrderBy(ur => ur.AssignedAt).Select(ur => ur.Role.Name).FirstOrDefault()));
+
         CreateMap<Order, Features.Orders.OrderDto>()
             .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.User.FirstName + " " + s.User.LastName))
             .ForMember(d => d.ItemCount, opt => opt.MapFrom(s => s.Items.Count));
