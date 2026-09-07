@@ -23,6 +23,7 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<Pr
     public async Task<List<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
         return await _context.Products
+            .AsNoTracking()
             .Where(p => p.Status == "active")
             .OrderBy(p => p.Name)
             .ProjectTo<ProductDto>(_mapper.ConfigurationProvider)

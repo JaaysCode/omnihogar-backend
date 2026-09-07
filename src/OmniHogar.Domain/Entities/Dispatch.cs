@@ -13,7 +13,6 @@ public class Dispatch
 
     public Guid? HandlerId { get; set; }
     public User? Handler { get; set; }
-
     /// <summary>Allowed: pending, preparing, packed, shipped, delivered.</summary>
     public string Status { get; set; } = "pending";
 

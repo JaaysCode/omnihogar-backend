@@ -23,6 +23,7 @@ public class GetAdminProductsQueryHandler : IRequestHandler<GetAdminProductsQuer
     public async Task<List<ProductDto>> Handle(GetAdminProductsQuery request, CancellationToken cancellationToken)
     {
         return await _context.Products
+            .AsNoTracking()
             .OrderBy(p => p.Name)
             .ProjectTo<ProductDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
