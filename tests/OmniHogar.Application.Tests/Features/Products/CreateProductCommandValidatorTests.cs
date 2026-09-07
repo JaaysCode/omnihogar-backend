@@ -8,7 +8,7 @@ namespace OmniHogar.Application.Tests.Features.Products;
 public class CreateProductCommandValidatorTests
 {
     private static CreateProductCommand ValidCommand() =>
-        new("SKU-001", "Widget", "A widget.", null, 19.99m, null);
+        new("SKU-001", "Widget", "A widget.", null, 19.99m, null, null);
 
     [Fact]
     public async Task ValidCommand_HasNoValidationErrors()
@@ -45,6 +45,29 @@ public class CreateProductCommandValidatorTests
         var result = await validator.TestValidateAsync(command);
 
         result.ShouldHaveValidationErrorFor(x => x.Price);
+    }
+
+    [Fact]
+    public async Task NegativeInitialStock_ReportsValidationError()
+    {
+        await using var context = InMemoryApplicationDbContext.Create();
+        var validator = new CreateProductCommandValidator(context);
+        var command = ValidCommand() with { InitialStock = -1 };
+
+        var result = await validator.TestValidateAsync(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.InitialStock);
+    }
+
+    [Fact]
+    public async Task NullOrZeroInitialStock_HasNoValidationErrors()
+    {
+        await using var context = InMemoryApplicationDbContext.Create();
+        var validator = new CreateProductCommandValidator(context);
+
+        var result = await validator.TestValidateAsync(ValidCommand() with { InitialStock = 0 });
+
+        result.ShouldNotHaveValidationErrorFor(x => x.InitialStock);
     }
 
     [Fact]

@@ -14,6 +14,9 @@ public interface IApplicationDbContext
     DbSet<UserRole> UserRoles { get; }
     DbSet<Product> Products { get; }
     DbSet<ProductCategory> ProductCategories { get; }
+    DbSet<Facility> Facilities { get; }
+    DbSet<Inventory> Inventory { get; }
+    DbSet<InventoryMovement> InventoryMovements { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
     DbSet<RefreshToken> RefreshTokens { get; }

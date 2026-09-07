@@ -38,12 +38,32 @@ public class ProductsController : ControllerBase
         return await _sender.Send(new GetAdminProductsQuery(), cancellationToken);
     }
 
+    // Requires an authenticated user (admin, jefe de bodega, coordinador de despacho, asesor de
+    // tienda all consult inventory today). Fine-grained per-role restriction isn't wired up yet —
+    // this repo has no [Authorize(Roles: ...)] usage anywhere else, so [Authorize] alone matches
+    // the existing convention until a real permission model lands.
+    [HttpGet("{id:guid}/stock")]
+    [Authorize]
+    public async Task<ActionResult<ProductStockDto>> GetStock(Guid id, CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetProductStockQuery(id), cancellationToken);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Guid>> Create(CreateProductCommand command, CancellationToken cancellationToken)
     {
         var id = await _sender.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id }, id);
+    }
+
+    /// <summary>Manually add units to a product's stock (HU inventario — "Agregar Unidades").</summary>
+    [HttpPost("{id:guid}/stock")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AddStock(Guid id, AddStockRequestDto body, CancellationToken cancellationToken)
+    {
+        await _sender.Send(new AddProductStockCommand(id, body.Quantity, body.Reason), cancellationToken);
+        return NoContent();
     }
 
     [HttpPut("{id:guid}")]
@@ -67,3 +87,6 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 }
+
+/// <summary>Request body for <see cref="ProductsController.AddStock"/> — ProductId comes from the route.</summary>
+public record AddStockRequestDto(int Quantity, string? Reason);

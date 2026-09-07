@@ -21,6 +21,9 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Facility> Facilities => Set<Facility>();
+    public DbSet<Inventory> Inventory => Set<Inventory>();
+    public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -62,6 +65,27 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(c => c.Id);
             builder.Ignore(c => c.Products);
+        });
+
+        modelBuilder.Entity<Facility>(builder =>
+        {
+            builder.HasKey(f => f.Id);
+        });
+
+        modelBuilder.Entity<Inventory>(builder =>
+        {
+            builder.HasKey(i => i.Id);
+            builder.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId);
+            builder.HasOne(i => i.Facility).WithMany().HasForeignKey(i => i.FacilityId);
+        });
+
+        modelBuilder.Entity<InventoryMovement>(builder =>
+        {
+            builder.HasKey(m => m.Id);
+            builder.HasOne(m => m.Product).WithMany().HasForeignKey(m => m.ProductId);
+            builder.HasOne(m => m.Facility).WithMany().HasForeignKey(m => m.FacilityId);
+            builder.Ignore(m => m.Order);
+            builder.Ignore(m => m.User);
         });
 
         modelBuilder.Entity<Order>(builder =>
