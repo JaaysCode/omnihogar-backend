@@ -21,6 +21,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
@@ -58,6 +60,25 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(c => c.Id);
             builder.Ignore(c => c.Products);
+        });
+
+        modelBuilder.Entity<Order>(builder =>
+        {
+            builder.HasKey(o => o.Id);
+            builder.HasOne(o => o.User).WithMany().HasForeignKey(o => o.UserId);
+            builder.Ignore(o => o.Facility);
+            builder.Ignore(o => o.Advisor);
+            builder.Ignore(o => o.ShippingAddress);
+            builder.Ignore(o => o.StatusHistory);
+            builder.Ignore(o => o.Payments);
+            builder.Ignore(o => o.Dispatch);
+        });
+
+        modelBuilder.Entity<OrderItem>(builder =>
+        {
+            builder.HasKey(oi => oi.Id);
+            builder.HasOne(oi => oi.Order).WithMany(o => o.Items).HasForeignKey(oi => oi.OrderId);
+            builder.HasOne(oi => oi.Product).WithMany().HasForeignKey(oi => oi.ProductId);
         });
     }
 
