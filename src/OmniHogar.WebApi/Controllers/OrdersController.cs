@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OmniHogar.Application.Features.Orders;
+using OmniHogar.Domain.Constants;
 
 namespace OmniHogar.WebApi.Controllers;
 
@@ -18,14 +19,14 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager,Sales")]
+    [Authorize(Policy = AppPermissions.PedidosConsultar)]
     public async Task<ActionResult<List<OrderDto>>> GetAll(CancellationToken cancellationToken)
     {
         return await _sender.Send(new GetOrdersQuery(), cancellationToken);
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin,Manager,Sales")]
+    [Authorize(Policy = AppPermissions.PedidosConsultar)]
     public async Task<ActionResult<OrderDetailDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         return await _sender.Send(new GetOrderByIdQuery(id), cancellationToken);

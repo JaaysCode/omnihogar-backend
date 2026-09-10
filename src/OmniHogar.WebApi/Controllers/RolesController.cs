@@ -2,12 +2,13 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OmniHogar.Application.Features.Employees;
+using OmniHogar.Domain.Constants;
 
 namespace OmniHogar.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = AppPermissions.UsuariosGestionar)]
 public class RolesController : ControllerBase
 {
     private readonly ISender _sender;

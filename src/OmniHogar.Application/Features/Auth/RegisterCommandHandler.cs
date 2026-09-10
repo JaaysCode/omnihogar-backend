@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using OmniHogar.Application.Common.Interfaces;
+using OmniHogar.Domain.Constants;
 using OmniHogar.Domain.Entities;
 using OmniHogar.Domain.Enums;
 
@@ -30,6 +31,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Guid>
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         _context.Users.Add(user);
+        _context.UserRoles.Add(new UserRole { User = user, RoleId = SeededRoleIds.Cliente });
         await _context.SaveChangesAsync(cancellationToken);
 
         return user.Id;

@@ -4,7 +4,7 @@ namespace OmniHogar.Infrastructure.Identity;
 
 public interface ITokenService
 {
-    string GenerateAccessToken(User user, IEnumerable<string> roles);
+    string GenerateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions);
     string GenerateRefreshToken();
 
     /// <summary>SHA-256 hash of a raw refresh token, for storage/lookup — the raw value is

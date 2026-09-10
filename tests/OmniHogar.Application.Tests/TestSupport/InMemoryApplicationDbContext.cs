@@ -18,6 +18,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
@@ -53,7 +55,18 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(r => r.Id);
             builder.HasMany(r => r.UserRoles).WithOne(ur => ur.Role).HasForeignKey(ur => ur.RoleId);
-            builder.Ignore(r => r.RolePermissions);
+            builder.HasMany(r => r.RolePermissions).WithOne(rp => rp.Role).HasForeignKey(rp => rp.RoleId);
+        });
+
+        modelBuilder.Entity<Permission>(builder =>
+        {
+            builder.HasKey(p => p.Id);
+            builder.HasMany(p => p.RolePermissions).WithOne(rp => rp.Permission).HasForeignKey(rp => rp.PermissionId);
+        });
+
+        modelBuilder.Entity<RolePermission>(builder =>
+        {
+            builder.HasKey(rp => new { rp.RoleId, rp.PermissionId });
         });
 
         modelBuilder.Entity<UserRole>(builder =>

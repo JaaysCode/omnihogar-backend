@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using OmniHogar.Application.Common.Interfaces;
+using OmniHogar.Domain.Constants;
 using OmniHogar.Infrastructure.Identity;
 using OmniHogar.Infrastructure.Persistence;
 using OmniHogar.Infrastructure.Services;
@@ -59,7 +60,15 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        // Una política por permiso: [Authorize(Policy = AppPermissions.X)] exige el claim
+        // "permission" == X, que el TokenService emite a partir de role_permissions.
+        services.AddAuthorization(options =>
+        {
+            foreach (var permission in AppPermissions.All)
+            {
+                options.AddPolicy(permission, policy => policy.RequireClaim("permission", permission));
+            }
+        });
 
         return services;
     }

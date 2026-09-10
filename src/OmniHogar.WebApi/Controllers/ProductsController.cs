@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OmniHogar.Application.Features.Products;
+using OmniHogar.Domain.Constants;
 
 namespace OmniHogar.WebApi.Controllers;
 
@@ -32,25 +33,22 @@ public class ProductsController : ControllerBase
 
     /// <summary>Admin management list (HU-10) — every product, any status.</summary>
     [HttpGet("admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPermissions.ProductosVerCatalogo)]
     public async Task<ActionResult<List<ProductDto>>> GetAllForAdmin(CancellationToken cancellationToken)
     {
         return await _sender.Send(new GetAdminProductsQuery(), cancellationToken);
     }
 
-    // Requires an authenticated user (admin, jefe de bodega, coordinador de despacho, asesor de
-    // tienda all consult inventory today). Fine-grained per-role restriction isn't wired up yet —
-    // this repo has no [Authorize(Roles: ...)] usage anywhere else, so [Authorize] alone matches
-    // the existing convention until a real permission model lands.
+    // HU-11: administrador, jefe de bodega, coordinador de despacho y asesor de tienda.
     [HttpGet("{id:guid}/stock")]
-    [Authorize]
+    [Authorize(Policy = AppPermissions.InventarioConsultar)]
     public async Task<ActionResult<ProductStockDto>> GetStock(Guid id, CancellationToken cancellationToken)
     {
         return await _sender.Send(new GetProductStockQuery(id), cancellationToken);
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPermissions.ProductosGestionar)]
     public async Task<ActionResult<Guid>> Create(CreateProductCommand command, CancellationToken cancellationToken)
     {
         var id = await _sender.Send(command, cancellationToken);
@@ -59,7 +57,7 @@ public class ProductsController : ControllerBase
 
     /// <summary>Manually add units to a product's stock (HU inventario — "Agregar Unidades").</summary>
     [HttpPost("{id:guid}/stock")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPermissions.InventarioAjustar)]
     public async Task<IActionResult> AddStock(Guid id, AddStockRequestDto body, CancellationToken cancellationToken)
     {
         await _sender.Send(new AddProductStockCommand(id, body.Quantity, body.Reason), cancellationToken);
@@ -67,7 +65,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPermissions.ProductosGestionar)]
     public async Task<IActionResult> Update(Guid id, UpdateProductCommand command, CancellationToken cancellationToken)
     {
         if (id != command.Id)
@@ -80,7 +78,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPermissions.ProductosGestionar)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteProductCommand(id), cancellationToken);

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OmniHogar.Domain.Constants;
 using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Infrastructure.Persistence.Configurations;
@@ -21,21 +22,33 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.HasData(
             new Role
             {
-                Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                Name = "Admin",
-                Description = "Full system access.",
+                Id = SeededRoleIds.Administrador,
+                Name = "Administrador",
+                Description = "Acceso total al sistema.",
             },
             new Role
             {
-                Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                Name = "Manager",
-                Description = "Store and inventory management.",
+                Id = SeededRoleIds.JefeDeBodega,
+                Name = "Jefe de Bodega",
+                Description = "Gestión de inventario y recepción de mercancía.",
             },
             new Role
             {
-                Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                Name = "Sales",
-                Description = "Point of sale and order handling.",
+                Id = SeededRoleIds.AsesorDeTienda,
+                Name = "Asesor de Tienda",
+                Description = "Punto de venta y atención en tienda.",
+            },
+            new Role
+            {
+                Id = SeededRoleIds.CoordinadorDeDespacho,
+                Name = "Coordinador de Despacho",
+                Description = "Preparación y despacho de pedidos.",
+            },
+            new Role
+            {
+                Id = SeededRoleIds.Cliente,
+                Name = "Cliente",
+                Description = "Cuenta de cliente para compras y consulta de pedidos.",
             });
     }
 }

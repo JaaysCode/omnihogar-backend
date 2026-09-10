@@ -17,7 +17,7 @@ public class TokenService : ITokenService
         _jwtSettings = jwtSettings.Value;
     }
 
-    public string GenerateAccessToken(User user, IEnumerable<string> roles)
+    public string GenerateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions)
     {
         var claims = new List<Claim>
         {
@@ -29,6 +29,7 @@ public class TokenService : ITokenService
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        claims.AddRange(permissions.Select(permission => new Claim("permission", permission)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

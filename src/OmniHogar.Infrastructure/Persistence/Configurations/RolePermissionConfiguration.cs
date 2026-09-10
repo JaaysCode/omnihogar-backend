@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OmniHogar.Domain.Constants;
 using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Infrastructure.Persistence.Configurations;
@@ -24,5 +25,59 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
             .WithMany(p => p.RolePermissions)
             .HasForeignKey(rp => rp.PermissionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasData(BuildSeed());
     }
+
+    // Administrador → todos; el resto según su función. Cliente no tiene permisos (el catálogo
+    // público es anónimo).
+    private static IEnumerable<RolePermission> BuildSeed()
+    {
+        foreach (var permissionId in AllPermissionIds())
+        {
+            yield return new RolePermission { RoleId = SeededRoleIds.Administrador, PermissionId = permissionId };
+        }
+
+        foreach (var permissionId in new[]
+                 {
+                     SeededPermissionIds.InventarioConsultar,
+                     SeededPermissionIds.InventarioAjustar,
+                     SeededPermissionIds.ProductosVerCatalogo,
+                     SeededPermissionIds.PedidosConsultar,
+                 })
+        {
+            yield return new RolePermission { RoleId = SeededRoleIds.JefeDeBodega, PermissionId = permissionId };
+        }
+
+        foreach (var permissionId in new[]
+                 {
+                     SeededPermissionIds.InventarioConsultar,
+                     SeededPermissionIds.PedidosConsultar,
+                 })
+        {
+            yield return new RolePermission { RoleId = SeededRoleIds.CoordinadorDeDespacho, PermissionId = permissionId };
+        }
+
+        foreach (var permissionId in new[]
+                 {
+                     SeededPermissionIds.InventarioConsultar,
+                     SeededPermissionIds.PosRegistrarVenta,
+                     SeededPermissionIds.PedidosConsultar,
+                     SeededPermissionIds.ProductosVerCatalogo,
+                 })
+        {
+            yield return new RolePermission { RoleId = SeededRoleIds.AsesorDeTienda, PermissionId = permissionId };
+        }
+    }
+
+    private static Guid[] AllPermissionIds() =>
+    [
+        SeededPermissionIds.UsuariosGestionar,
+        SeededPermissionIds.ProductosGestionar,
+        SeededPermissionIds.ProductosVerCatalogo,
+        SeededPermissionIds.InventarioConsultar,
+        SeededPermissionIds.InventarioAjustar,
+        SeededPermissionIds.PedidosConsultar,
+        SeededPermissionIds.PosRegistrarVenta,
+    ];
 }
