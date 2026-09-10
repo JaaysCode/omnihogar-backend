@@ -498,4 +498,8 @@ appsettings.Production.json
 *.pfx
 *.key
 secrets.json
+.claude
+.agents
+.config
+.idea
 
