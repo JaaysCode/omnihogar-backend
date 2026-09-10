@@ -11,6 +11,9 @@ public class EmployeeDto
     /// <summary>Null if the account somehow has no role assigned yet.</summary>
     public string? RoleName { get; set; }
 
+    /// <summary>Id of the assigned role, for the "cambiar rol" editor (HU-31).</summary>
+    public Guid? RoleId { get; set; }
+
     public bool Status { get; set; }
     public DateTime CreatedAt { get; set; }
 }

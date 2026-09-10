@@ -28,4 +28,12 @@ public class NotFoundException : Exception
     /// <summary>404 con mensaje específico de producto (HU-11 crit. 4, HU-10).</summary>
     public static NotFoundException Producto(object key) =>
         new("Product", key, "El producto solicitado no existe.");
+
+    /// <summary>404 con mensaje específico de empleado (HU-31).</summary>
+    public static NotFoundException Empleado(object key) =>
+        new("Employee", key, "El empleado solicitado no existe.");
+
+    /// <summary>404 con mensaje específico de rol (HU-31).</summary>
+    public static NotFoundException Rol(object key) =>
+        new("Role", key, "El rol solicitado no existe.");
 }
