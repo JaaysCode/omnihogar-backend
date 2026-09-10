@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Application.Features.Auth;
 using OmniHogar.Domain.Entities;
+using OmniHogar.Domain.Exceptions;
 using OmniHogar.Infrastructure.Identity;
 using OmniHogar.WebApi.Contracts;
 
@@ -50,6 +51,8 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
+        ValidateLoginFields(request);
+
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
@@ -127,14 +130,42 @@ public class AuthController : ControllerBase
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    // HU-03 crit. 3: campos obligatorios en el inicio de sesión — mismo shape 400
+    // {status,title,errors} que el resto de validaciones, con la redacción de RegisterCommandValidator.
+    private static void ValidateLoginFields(LoginRequest request)
+    {
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            errors["Email"] = ["El correo electrónico es obligatorio."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            errors["Password"] = ["La contraseña es obligatoria."];
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
+    }
+
     private async Task<string> BuildAccessTokenAsync(User user, CancellationToken cancellationToken)
     {
-        var roles = await _context.Users
-            .Where(u => u.Id == user.Id)
-            .SelectMany(u => u.UserRoles.Select(ur => ur.Role.Name))
+        var roles = await _context.UserRoles
+            .Where(ur => ur.UserId == user.Id)
+            .Select(ur => ur.Role.Name)
             .ToListAsync(cancellationToken);
 
-        return _tokenService.GenerateAccessToken(user, roles);
+        var permissions = await _context.UserRoles
+            .Where(ur => ur.UserId == user.Id)
+            .SelectMany(ur => ur.Role.RolePermissions.Select(rp => rp.Permission.Name))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return _tokenService.GenerateAccessToken(user, roles, permissions);
     }
 
     private (string RawToken, RefreshToken Entity) CreateRefreshToken(Guid userId)
