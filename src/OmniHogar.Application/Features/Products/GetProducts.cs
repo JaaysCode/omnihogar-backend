@@ -1,5 +1,3 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OmniHogar.Application.Common.Interfaces;
@@ -12,21 +10,36 @@ public record GetProductsQuery : IRequest<List<ProductDto>>;
 public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<ProductDto>>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IMapper _mapper;
 
-    public GetProductsQueryHandler(IApplicationDbContext context, IMapper mapper)
+    public GetProductsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
-        _mapper = mapper;
     }
 
     public async Task<List<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
+        // Hand-rolled projection (instead of ProjectTo) so each row can carry its cross-facility
+        // availability (HU-05 crit. 1/4) via a correlated sum over Inventory — Product has no
+        // Inventory navigation to map through AutoMapper.
         return await _context.Products
             .AsNoTracking()
             .Where(p => p.Status == "active")
             .OrderBy(p => p.Name)
-            .ProjectTo<ProductDto>(_mapper.ConfigurationProvider)
+            .Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Sku = p.Sku,
+                Name = p.Name,
+                Description = p.Description,
+                CategoryId = p.CategoryId,
+                Price = p.Price,
+                ImageUrl = p.ImageUrl,
+                Status = p.Status,
+                AvailableQuantity =
+                    _context.Inventory.Where(i => i.ProductId == p.Id).Sum(i => (int?)i.AvailableQuantity) ?? 0,
+                InStock =
+                    (_context.Inventory.Where(i => i.ProductId == p.Id).Sum(i => (int?)i.AvailableQuantity) ?? 0) > 0,
+            })
             .ToListAsync(cancellationToken);
     }
 }

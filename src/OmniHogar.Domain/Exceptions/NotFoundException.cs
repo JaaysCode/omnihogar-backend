@@ -36,4 +36,8 @@ public class NotFoundException : Exception
     /// <summary>404 con mensaje específico de rol (HU-31).</summary>
     public static NotFoundException Rol(object key) =>
         new("Role", key, "El rol solicitado no existe.");
+
+    /// <summary>404 cuando se opera sobre una línea que no está en el carrito (HU-05 crit. 2/3).</summary>
+    public static NotFoundException ItemEnCarrito(object key) =>
+        new("CartItem", key, "El producto no está en el carrito.");
 }

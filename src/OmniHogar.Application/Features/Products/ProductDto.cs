@@ -10,4 +10,13 @@ public class ProductDto
     public decimal Price { get; set; }
     public string? ImageUrl { get; set; }
     public string Status { get; set; } = "active";
+
+    /// <summary>
+    /// Units available across all facilities (HU-05). Populated by the public catalog query
+    /// (<see cref="GetProductsQuery"/>); <c>null</c> from queries that don't compute it.
+    /// </summary>
+    public int? AvailableQuantity { get; set; }
+
+    /// <summary><c>true</c> when <see cref="AvailableQuantity"/> &gt; 0 (HU-05); <c>null</c> when not computed.</summary>
+    public bool? InStock { get; set; }
 }

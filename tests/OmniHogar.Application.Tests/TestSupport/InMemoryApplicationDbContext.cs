@@ -28,6 +28,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Cart> Carts => Set<Cart>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
@@ -118,6 +120,19 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.HasKey(oi => oi.Id);
             builder.HasOne(oi => oi.Order).WithMany(o => o.Items).HasForeignKey(oi => oi.OrderId);
             builder.HasOne(oi => oi.Product).WithMany().HasForeignKey(oi => oi.ProductId);
+        });
+
+        modelBuilder.Entity<Cart>(builder =>
+        {
+            builder.HasKey(c => c.Id);
+            builder.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId);
+        });
+
+        modelBuilder.Entity<CartItem>(builder =>
+        {
+            builder.HasKey(ci => ci.Id);
+            builder.HasOne(ci => ci.Cart).WithMany(c => c.Items).HasForeignKey(ci => ci.CartId);
+            builder.HasOne(ci => ci.Product).WithMany().HasForeignKey(ci => ci.ProductId);
         });
 
         modelBuilder.Entity<RefreshToken>(builder =>
