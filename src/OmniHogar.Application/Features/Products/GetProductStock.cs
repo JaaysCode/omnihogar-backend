@@ -25,7 +25,7 @@ public class GetProductStockQueryHandler : IRequestHandler<GetProductStockQuery,
 
         if (product is null)
         {
-            throw new NotFoundException(nameof(Domain.Entities.Product), request.ProductId);
+            throw NotFoundException.Producto(request.ProductId);
         }
 
         var facilities = await _context.Inventory

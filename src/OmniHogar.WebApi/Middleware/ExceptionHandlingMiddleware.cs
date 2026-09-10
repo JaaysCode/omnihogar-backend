@@ -39,9 +39,9 @@ public class ExceptionHandlingMiddleware
         var (statusCode, title, errors) = exception switch
         {
             NotFoundException => (HttpStatusCode.NotFound, exception.Message, null as IDictionary<string, string[]>),
-            ValidationException validationEx => (HttpStatusCode.BadRequest, "Validation failed", validationEx.Errors),
+            ValidationException validationEx => (HttpStatusCode.BadRequest, "Hay errores de validación.", validationEx.Errors),
             UnauthorizedAccessException => (HttpStatusCode.Forbidden, exception.Message, null),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", null),
+            _ => (HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.", null),
         };
 
         if (statusCode == HttpStatusCode.InternalServerError)

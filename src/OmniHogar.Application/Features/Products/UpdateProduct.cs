@@ -53,7 +53,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
 
         if (product is null)
         {
-            throw new NotFoundException(nameof(Domain.Entities.Product), request.Id);
+            throw NotFoundException.Producto(request.Id);
         }
 
         product.Sku = request.Sku;

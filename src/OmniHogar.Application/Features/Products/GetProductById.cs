@@ -27,7 +27,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
 
         if (product is null)
         {
-            throw new NotFoundException(nameof(Domain.Entities.Product), request.Id);
+            throw NotFoundException.Producto(request.Id);
         }
 
         return _mapper.Map<ProductDto>(product);

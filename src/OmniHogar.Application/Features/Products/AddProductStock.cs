@@ -39,7 +39,7 @@ public class AddProductStockCommandHandler : IRequestHandler<AddProductStockComm
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
         if (product is null)
         {
-            throw new NotFoundException(nameof(Product), request.ProductId);
+            throw NotFoundException.Producto(request.ProductId);
         }
 
         // Single-facility MVP: no facility picker in the UI yet, so every manual stock add lands

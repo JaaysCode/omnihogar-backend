@@ -23,7 +23,7 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand>
 
         if (product is null)
         {
-            throw new NotFoundException(nameof(Domain.Entities.Product), request.Id);
+            throw NotFoundException.Producto(request.Id);
         }
 
         _context.Products.Remove(product);
