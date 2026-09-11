@@ -58,6 +58,17 @@ public class UpdateCartItemQuantityCommandHandler : IRequestHandler<UpdateCartIt
         }
 
         item.Quantity = request.Quantity;
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["Quantity"] = ["El carrito cambió mientras se procesaba tu solicitud. Inténtalo de nuevo."],
+            });
+        }
     }
 }

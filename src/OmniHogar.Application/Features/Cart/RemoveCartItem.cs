@@ -36,6 +36,15 @@ public class RemoveCartItemCommandHandler : IRequestHandler<RemoveCartItemComman
         }
 
         _context.CartItems.Remove(item);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Already gone by the time we tried to delete it (e.g. removed twice back-to-back)
+            // — the end state the caller wanted is already true, so this isn't an error.
+        }
     }
 }

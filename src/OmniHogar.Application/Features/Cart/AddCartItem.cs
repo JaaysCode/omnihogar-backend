@@ -90,6 +90,18 @@ public class AddCartItemCommandHandler : IRequestHandler<AddCartItemCommand>
             existing.Quantity = desired;
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Two near-simultaneous requests for the same line (double-click, two tabs) can race
+            // between the read above and this save — surface a retryable 400 instead of a 500.
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["Quantity"] = ["El carrito cambió mientras se procesaba tu solicitud. Inténtalo de nuevo."],
+            });
+        }
     }
 }
