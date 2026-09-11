@@ -31,4 +31,18 @@ public class OrdersController : ControllerBase
     {
         return await _sender.Send(new GetOrderByIdQuery(id), cancellationToken);
     }
+
+    /// <summary>Register an in-store sale (HU-06) — creates the order and decrements stock.</summary>
+    [HttpPost]
+    [Authorize(Policy = AppPermissions.PosRegistrarVenta)]
+    public async Task<ActionResult<StoreSaleResultDto>> RegisterStoreSale(
+        RegisterStoreSaleRequest body,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new RegisterStoreSaleCommand(body.Items), cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.OrderId }, result);
+    }
 }
+
+/// <summary>Request body for <see cref="OrdersController.RegisterStoreSale"/>.</summary>
+public record RegisterStoreSaleRequest(IReadOnlyList<StoreSaleItem> Items);
