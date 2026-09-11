@@ -30,6 +30,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
@@ -107,11 +109,11 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(o => o.Id);
             builder.HasOne(o => o.User).WithMany().HasForeignKey(o => o.UserId);
+            builder.HasOne(o => o.ShippingAddress).WithMany().HasForeignKey(o => o.ShippingAddressId);
+            builder.HasMany(o => o.Payments).WithOne(p => p.Order).HasForeignKey(p => p.OrderId);
             builder.Ignore(o => o.Facility);
             builder.Ignore(o => o.Advisor);
-            builder.Ignore(o => o.ShippingAddress);
             builder.Ignore(o => o.StatusHistory);
-            builder.Ignore(o => o.Payments);
             builder.Ignore(o => o.Dispatch);
         });
 
@@ -139,6 +141,17 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(rt => rt.Id);
             builder.HasOne(rt => rt.User).WithMany().HasForeignKey(rt => rt.UserId);
+        });
+
+        modelBuilder.Entity<CustomerAddress>(builder =>
+        {
+            builder.HasKey(a => a.Id);
+            builder.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId);
+        });
+
+        modelBuilder.Entity<Payment>(builder =>
+        {
+            builder.HasKey(p => p.Id);
         });
     }
 

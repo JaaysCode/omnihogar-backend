@@ -40,4 +40,8 @@ public class NotFoundException : Exception
     /// <summary>404 cuando se opera sobre una línea que no está en el carrito (HU-05 crit. 2/3).</summary>
     public static NotFoundException ItemEnCarrito(object key) =>
         new("CartItem", key, "El producto no está en el carrito.");
+
+    /// <summary>404 con mensaje específico de pedido (HU-08/HU-09 — checkout).</summary>
+    public static NotFoundException Pedido(object key) =>
+        new("Order", key, "El pedido solicitado no existe.");
 }

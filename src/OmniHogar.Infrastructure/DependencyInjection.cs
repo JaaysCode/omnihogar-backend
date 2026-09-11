@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Constants;
 using OmniHogar.Infrastructure.Identity;
+using OmniHogar.Infrastructure.Payments;
 using OmniHogar.Infrastructure.Persistence;
 using OmniHogar.Infrastructure.Services;
 
@@ -35,6 +37,17 @@ public static class DependencyInjection
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // Mercado Pago Checkout Pro (HU-08/HU-09). AccessToken is optional at startup — an
+        // unconfigured gateway just fails checkout calls with a "communication error", it
+        // doesn't stop the whole API from booting like Jwt:Secret does.
+        services.Configure<MercadoPagoOptions>(configuration.GetSection(MercadoPagoOptions.SectionName));
+        services.AddScoped<IMercadoPagoUrls>(sp => sp.GetRequiredService<IOptions<MercadoPagoOptions>>().Value);
+        services.AddHttpClient<IMercadoPagoClient, MercadoPagoClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.mercadopago.com/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
             ?? throw new InvalidOperationException("Jwt settings not configured.");
