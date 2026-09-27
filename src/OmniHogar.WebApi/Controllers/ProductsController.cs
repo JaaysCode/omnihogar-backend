@@ -31,6 +31,17 @@ public class ProductsController : ControllerBase
         return await _sender.Send(new GetProductByIdQuery(id), cancellationToken);
     }
 
+    /// <summary>Search catalog by name and/or category (HU-19).</summary>
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<List<ProductDto>>> Search(
+        [FromQuery] string? name,
+        [FromQuery] Guid? categoryId,
+        CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new SearchProductsQuery(name, categoryId), cancellationToken);
+    }
+
     /// <summary>Admin management list (HU-10) — every product, any status.</summary>
     [HttpGet("admin")]
     [Authorize(Policy = AppPermissions.ProductosVerCatalogo)]
