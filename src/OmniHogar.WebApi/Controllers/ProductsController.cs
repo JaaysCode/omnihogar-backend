@@ -58,6 +58,17 @@ public class ProductsController : ControllerBase
         return await _sender.Send(new GetProductStockQuery(id), cancellationToken);
     }
 
+    /// <summary>Batched stock lookup — fills a whole table's Stock column in one request instead
+    /// of one GET per row. Ids that don't match a product are silently omitted.</summary>
+    [HttpGet("stock")]
+    [Authorize(Policy = AppPermissions.InventarioConsultar)]
+    public async Task<ActionResult<List<ProductStockDto>>> GetStockBatch(
+        [FromQuery] List<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetProductsStockQuery(ids), cancellationToken);
+    }
+
     [HttpPost]
     [Authorize(Policy = AppPermissions.ProductosGestionar)]
     public async Task<ActionResult<Guid>> Create(CreateProductCommand command, CancellationToken cancellationToken)
