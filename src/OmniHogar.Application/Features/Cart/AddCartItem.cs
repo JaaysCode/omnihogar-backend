@@ -78,12 +78,22 @@ public class AddCartItemCommandHandler : IRequestHandler<AddCartItemCommand>
 
         if (existing is null)
         {
-            cart.Items.Add(new CartItemEntity
+            // Adding only to `cart.Items` (nav-collection fixup) leaves EF's state detection
+            // ambiguous: CartItem.Id already carries a non-default, client-generated Guid (see
+            // the entity's default ctor) on a column that's *also* configured with a DB-side
+            // default (`gen_random_uuid()`), so EF's implicit-Added heuristic decides this "looks
+            // existing" and tracks it Modified instead of Added — it then emits an UPDATE by that
+            // brand-new id, matches 0 rows, and SaveChanges throws a bogus DbUpdateConcurrencyException
+            // on every single add of a second distinct line. Adding explicitly through the DbSet
+            // forces the Added state unambiguously; CartId is still wired by FK fixup.
+            var newItem = new CartItemEntity
             {
                 ProductId = request.ProductId,
                 Quantity = desired,
                 UnitPrice = product.Price,
-            });
+            };
+            cart.Items.Add(newItem);
+            _context.CartItems.Add(newItem);
         }
         else
         {
