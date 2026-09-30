@@ -39,6 +39,10 @@ public class RegisterStoreSaleCommandValidator : AbstractValidator<RegisterStore
 
 public class RegisterStoreSaleCommandHandler : IRequestHandler<RegisterStoreSaleCommand, StoreSaleResultDto>
 {
+    // Product.Price is the final, IVA-inclusive price shown to the public — Colombian retail
+    // prices must already include tax, so nothing is added at the register. Tax below is only
+    // backed OUT of that price for the receipt/bookkeeping (what to remit to DIAN), never added
+    // on top of what the customer pays.
     private const decimal TaxRate = 0.19m;
 
     private readonly IApplicationDbContext _context;
@@ -133,8 +137,12 @@ public class RegisterStoreSaleCommandHandler : IRequestHandler<RegisterStoreSale
             });
         }
 
+        // subtotal is the sum of Prices already shown to the customer — nothing added here.
+        var netBase = Math.Round(subtotal / (1 + TaxRate), 2, MidpointRounding.AwayFromZero);
+        var embeddedTax = subtotal - netBase;
+
         order.Subtotal = subtotal;
-        order.Total = subtotal * (1 + TaxRate);
+        order.Total = subtotal;
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync(cancellationToken);
@@ -144,7 +152,7 @@ public class RegisterStoreSaleCommandHandler : IRequestHandler<RegisterStoreSale
             OrderId = order.Id,
             OrderNumber = order.OrderNumber,
             Subtotal = order.Subtotal,
-            Tax = order.Total - order.Subtotal,
+            Tax = embeddedTax,
             Total = order.Total,
             CreatedAt = order.CreatedAt,
             Items = order.Items.Select(i => new StoreSaleItemResultDto

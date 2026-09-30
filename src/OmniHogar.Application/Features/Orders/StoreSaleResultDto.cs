@@ -6,13 +6,17 @@ public class StoreSaleResultDto
     public Guid OrderId { get; set; }
     public string OrderNumber { get; set; } = string.Empty;
 
-    /// <summary>Sum of every line's price × quantity, before tax.</summary>
+    /// <summary>Sum of every line's price × quantity. Prices are already IVA-inclusive
+    /// (the sticker price the customer saw), so this equals <see cref="Total"/> — nothing
+    /// added at the register.</summary>
     public decimal Subtotal { get; set; }
 
-    /// <summary>19% IVA over <see cref="Subtotal"/>.</summary>
+    /// <summary>19% IVA backed OUT of <see cref="Subtotal"/> (not added to it) — for the
+    /// receipt/bookkeeping breakdown of what's owed to DIAN, since the price already includes it.</summary>
     public decimal Tax { get; set; }
 
-    /// <summary><see cref="Subtotal"/> + <see cref="Tax"/> — the amount charged.</summary>
+    /// <summary>The amount charged — equal to <see cref="Subtotal"/>, since tax is already
+    /// embedded in each product's price.</summary>
     public decimal Total { get; set; }
 
     public DateTime CreatedAt { get; set; }

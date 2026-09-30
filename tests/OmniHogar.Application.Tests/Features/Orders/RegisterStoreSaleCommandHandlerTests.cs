@@ -61,7 +61,7 @@ public class RegisterStoreSaleCommandHandlerTests
     }
 
     [Fact]
-    public async Task ComputesSubtotalAndAppliesNineteenPercentTax()
+    public async Task ComputesTotalFromIvaInclusivePricesAndBacksOutTheEmbeddedTax()
     {
         var (context, user, productId, _) = await Seed(available: 10, price: 250m);
         var handler = new RegisterStoreSaleCommandHandler(context, user);
@@ -69,9 +69,11 @@ public class RegisterStoreSaleCommandHandlerTests
         var result = await handler.Handle(
             new RegisterStoreSaleCommand([new StoreSaleItem(productId, 3)]), CancellationToken.None);
 
+        // Price (250) already includes IVA — nothing is added at the register.
         Assert.Equal(750m, result.Subtotal);
-        Assert.Equal(142.5m, result.Tax);
-        Assert.Equal(892.5m, result.Total);
+        Assert.Equal(750m, result.Total);
+        // Tax is only backed OUT of the price for the receipt breakdown: 750 / 1.19 = 630.25 base.
+        Assert.Equal(119.75m, result.Tax);
     }
 
     [Fact]

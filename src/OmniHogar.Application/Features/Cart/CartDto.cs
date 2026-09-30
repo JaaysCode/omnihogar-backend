@@ -9,7 +9,8 @@ public class CartDto
     /// <summary>Sum of every line subtotal.</summary>
     public decimal Subtotal { get; set; }
 
-    /// <summary>Amount payable. No tax/shipping at the cart stage yet, so equal to <see cref="Subtotal"/>.</summary>
+    /// <summary>Amount payable. Product prices already include IVA and there's no shipping fee,
+    /// so this equals <see cref="Subtotal"/> — nothing gets added later at checkout.</summary>
     public decimal Total { get; set; }
 
     /// <summary>Sum of every line's quantity.</summary>

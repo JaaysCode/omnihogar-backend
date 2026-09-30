@@ -51,7 +51,7 @@ public class CreateCheckoutPreferenceCommandHandlerTests
         Assert.Equal("web", order.Channel);
         Assert.Equal("pending_payment", order.Status);
         Assert.Equal(200m, order.Subtotal);
-        Assert.Equal(238m, order.Total); // 200 * 1.19
+        Assert.Equal(200m, order.Total); // price already includes IVA — nothing added
         Assert.Single(order.Items);
 
         var address = await context.CustomerAddresses.SingleAsync();

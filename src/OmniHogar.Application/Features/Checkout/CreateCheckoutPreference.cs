@@ -129,7 +129,7 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
             Channel = "web",
             Status = "pending_payment",
             Subtotal = subtotal,
-            Total = subtotal * 1.19m,
+            Total = subtotal,
         };
 
         foreach (var line in cart.Items)
