@@ -15,7 +15,7 @@ public class CreateCheckoutPreferenceCommandHandlerTests
 
     private static CustomerAddressInput ValidAddress() => new("Calle 123 #45-67", "Bogotá", "Chapinero", "Casa azul");
 
-    private static async Task<(InMemoryApplicationDbContext Context, FakeCurrentUserService User, FakeMercadoPagoClient Gateway, Guid ProductId)> SeedCartWithLine(
+    private static async Task<(InMemoryApplicationDbContext Context, FakeCurrentUserService User, FakePaymentGatewayClient Gateway, Guid ProductId)> SeedCartWithLine(
         int available, int quantity = 2, decimal price = 100m)
     {
         var context = InMemoryApplicationDbContext.Create();
@@ -36,14 +36,14 @@ public class CreateCheckoutPreferenceCommandHandlerTests
         });
         await context.SaveChangesAsync(CancellationToken.None);
 
-        return (context, new FakeCurrentUserService { UserId = userId.ToString(), Email = "cliente@x.test" }, new FakeMercadoPagoClient(), productId);
+        return (context, new FakeCurrentUserService { UserId = userId.ToString(), Email = "cliente@x.test" }, new FakePaymentGatewayClient(), productId);
     }
 
     [Fact]
     public async Task SuccessfulCheckout_CreatesAddressOrderAndPendingPayment()
     {
         var (context, user, gateway, productId) = await SeedCartWithLine(available: 10, quantity: 2, price: 100m);
-        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakeMercadoPagoUrls());
+        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakePaymentGatewayUrls());
 
         var result = await handler.Handle(new CreateCheckoutPreferenceCommand(ValidAddress(), "card"), CancellationToken.None);
 
@@ -77,7 +77,7 @@ public class CreateCheckoutPreferenceCommandHandlerTests
         await context.SaveChangesAsync(CancellationToken.None);
 
         var handler = new CreateCheckoutPreferenceCommandHandler(
-            context, new FakeCurrentUserService { UserId = userId.ToString() }, new FakeMercadoPagoClient(), new FakeMercadoPagoUrls());
+            context, new FakeCurrentUserService { UserId = userId.ToString() }, new FakePaymentGatewayClient(), new FakePaymentGatewayUrls());
 
         await Assert.ThrowsAsync<ValidationException>(
             () => handler.Handle(new CreateCheckoutPreferenceCommand(ValidAddress(), "card"), CancellationToken.None));
@@ -89,7 +89,7 @@ public class CreateCheckoutPreferenceCommandHandlerTests
     public async Task QuantityBeyondAvailable_ThrowsValidationExceptionAndCreatesNothing()
     {
         var (context, user, gateway, _) = await SeedCartWithLine(available: 1, quantity: 5);
-        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakeMercadoPagoUrls());
+        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakePaymentGatewayUrls());
 
         await Assert.ThrowsAsync<ValidationException>(
             () => handler.Handle(new CreateCheckoutPreferenceCommand(ValidAddress(), "card"), CancellationToken.None));
@@ -103,7 +103,7 @@ public class CreateCheckoutPreferenceCommandHandlerTests
     {
         var (context, user, gateway, _) = await SeedCartWithLine(available: 10);
         gateway.ThrowOnCreatePreference = true;
-        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakeMercadoPagoUrls());
+        var handler = new CreateCheckoutPreferenceCommandHandler(context, user, gateway, new FakePaymentGatewayUrls());
 
         var ex = await Assert.ThrowsAsync<ValidationException>(
             () => handler.Handle(new CreateCheckoutPreferenceCommand(ValidAddress(), "card"), CancellationToken.None));

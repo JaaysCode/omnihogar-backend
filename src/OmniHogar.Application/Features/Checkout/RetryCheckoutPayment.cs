@@ -7,7 +7,7 @@ using ValidationException = OmniHogar.Domain.Exceptions.ValidationException;
 namespace OmniHogar.Application.Features.Checkout;
 
 /// <summary>
-/// Generates a fresh Mercado Pago preference for an order that's still awaiting payment —
+/// Generates a fresh Stripe Checkout session for an order that's still awaiting payment —
 /// after a rejection or a communication error (HU-09 crit. 2/3 "gestión correspondiente"),
 /// without touching the cart or creating a new order.
 /// </summary>
@@ -17,18 +17,18 @@ public class RetryCheckoutPaymentCommandHandler : IRequestHandler<RetryCheckoutP
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
-    private readonly IMercadoPagoClient _mercadoPago;
-    private readonly IMercadoPagoUrls _urls;
+    private readonly IPaymentGatewayClient _paymentGateway;
+    private readonly IPaymentGatewayUrls _urls;
 
     public RetryCheckoutPaymentCommandHandler(
         IApplicationDbContext context,
         ICurrentUserService currentUser,
-        IMercadoPagoClient mercadoPago,
-        IMercadoPagoUrls urls)
+        IPaymentGatewayClient paymentGateway,
+        IPaymentGatewayUrls urls)
     {
         _context = context;
         _currentUser = currentUser;
-        _mercadoPago = mercadoPago;
+        _paymentGateway = paymentGateway;
         _urls = urls;
     }
 
@@ -60,7 +60,7 @@ public class RetryCheckoutPaymentCommandHandler : IRequestHandler<RetryCheckoutP
         try
         {
             var resultUrl = $"{_urls.FrontendBaseUrl}/checkout/result?order={order.Id}";
-            var preference = await _mercadoPago.CreatePreferenceAsync(new MercadoPagoPreferenceRequest
+            var preference = await _paymentGateway.CreatePreferenceAsync(new PaymentGatewayPreferenceRequest
             {
                 Title = $"Pedido {order.OrderNumber}",
                 UnitPrice = order.Total,
@@ -70,7 +70,6 @@ public class RetryCheckoutPaymentCommandHandler : IRequestHandler<RetryCheckoutP
                 FailureUrl = resultUrl,
                 PendingUrl = resultUrl,
                 NotificationUrl = $"{_urls.BackendPublicBaseUrl}/api/checkout/webhook",
-                ExcludedPaymentTypes = CreateCheckoutPreferenceCommandHandler.ExcludedPaymentTypesFor(payment.PaymentMethod),
             }, cancellationToken);
 
             initPoint = preference.InitPoint;

@@ -5,9 +5,9 @@ using OmniHogar.Domain.Entities;
 namespace OmniHogar.Application.Features.Checkout;
 
 /// <summary>
-/// Applies a Mercado Pago payment status to our <see cref="Order"/>/<see cref="Payment"/> pair.
+/// Applies a payment gateway status to our <see cref="Order"/>/<see cref="Payment"/> pair.
 /// Shared by <see cref="GetCheckoutStatusQueryHandler"/> (redirect-back confirmation) and
-/// <see cref="HandleMercadoPagoWebhookCommandHandler"/> (webhook) — same outcome either way.
+/// <see cref="HandlePaymentGatewayWebhookCommandHandler"/> (webhook) — same outcome either way.
 /// Idempotent: a <see cref="Payment"/> that's no longer "pending" is left untouched, so a
 /// duplicate webhook delivery or a second status check never double-applies the side effects
 /// (inventory deduction, cart conversion).
@@ -18,7 +18,7 @@ public static class PaymentReconciler
         IApplicationDbContext context,
         Order order,
         Payment payment,
-        string mercadoPagoStatus,
+        string gatewayStatus,
         CancellationToken cancellationToken)
     {
         if (payment.Status != "pending")
@@ -26,7 +26,7 @@ public static class PaymentReconciler
             return;
         }
 
-        switch (mercadoPagoStatus)
+        switch (gatewayStatus)
         {
             case "approved":
                 payment.Status = "approved";

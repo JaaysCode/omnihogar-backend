@@ -12,7 +12,7 @@ public class GetCheckoutStatusQueryHandlerTests
     private static User Customer(Guid id) =>
         new() { Id = id, UserType = UserType.customer, Email = $"{id:N}@x.test", FirstName = "C", LastName = "X", PasswordHash = "h" };
 
-    private static async Task<(InMemoryApplicationDbContext Context, FakeCurrentUserService User, FakeMercadoPagoClient Gateway, Order Order, Guid ProductId)> SeedPendingOrder(int available = 10)
+    private static async Task<(InMemoryApplicationDbContext Context, FakeCurrentUserService User, FakePaymentGatewayClient Gateway, Order Order, Guid ProductId)> SeedPendingOrder(int available = 10)
     {
         var context = InMemoryApplicationDbContext.Create();
         var userId = Guid.NewGuid();
@@ -43,7 +43,7 @@ public class GetCheckoutStatusQueryHandlerTests
 
         await context.SaveChangesAsync(CancellationToken.None);
 
-        return (context, new FakeCurrentUserService { UserId = userId.ToString() }, new FakeMercadoPagoClient(), order, productId);
+        return (context, new FakeCurrentUserService { UserId = userId.ToString() }, new FakePaymentGatewayClient(), order, productId);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class GetCheckoutStatusQueryHandlerTests
     }
 
     [Fact]
-    public async Task StillPendingAtMercadoPago_LeavesEverythingUnchanged()
+    public async Task StillPendingAtTheGateway_LeavesEverythingUnchanged()
     {
         var (context, user, gateway, order, _) = await SeedPendingOrder();
         gateway.PaymentToReturn = new() { Id = "pay-1", Status = "in_process", ExternalReference = order.Id.ToString() };
@@ -111,7 +111,7 @@ public class GetCheckoutStatusQueryHandlerTests
     }
 
     [Fact]
-    public async Task NoPaymentIdGiven_ReturnsCurrentStatusWithoutCallingTheGateway()
+    public async Task NoPaymentIdAndNoPaymentYet_StaysPending()
     {
         var (context, user, gateway, order, _) = await SeedPendingOrder();
         var handler = new GetCheckoutStatusQueryHandler(context, user, gateway);
@@ -120,5 +120,62 @@ public class GetCheckoutStatusQueryHandlerTests
 
         Assert.Equal("pending_payment", result.OrderStatus);
         Assert.Null(gateway.LastPaymentIdRequested);
+        Assert.Equal(order.Id.ToString(), gateway.LastExternalReferenceSearched);
+    }
+
+    [Fact]
+    public async Task NoPaymentIdGiven_ConfirmsViaExternalReferenceSearch()
+    {
+        var (context, user, gateway, order, _) = await SeedPendingOrder();
+        gateway.LatestPaymentToReturn = new() { Id = "pay-9", Status = "approved", ExternalReference = order.Id.ToString() };
+        var handler = new GetCheckoutStatusQueryHandler(context, user, gateway);
+
+        var result = await handler.Handle(new GetCheckoutStatusQuery(order.Id, null), CancellationToken.None);
+
+        Assert.Equal("payment_approved", result.OrderStatus);
+        Assert.Equal("approved", result.PaymentStatus);
+    }
+
+    [Fact]
+    public async Task PaymentIdFromAnotherOrder_IsIgnored()
+    {
+        var (context, user, gateway, order, _) = await SeedPendingOrder();
+        gateway.PaymentToReturn = new() { Id = "pay-1", Status = "approved", ExternalReference = Guid.NewGuid().ToString() };
+        var handler = new GetCheckoutStatusQueryHandler(context, user, gateway);
+
+        var result = await handler.Handle(new GetCheckoutStatusQuery(order.Id, "pay-1"), CancellationToken.None);
+
+        Assert.Equal("pending_payment", result.OrderStatus);
+    }
+
+    [Fact]
+    public async Task Cancelled_MarksPaymentRejectedWithoutCallingTheGateway()
+    {
+        var (context, user, gateway, order, _) = await SeedPendingOrder();
+        var handler = new GetCheckoutStatusQueryHandler(context, user, gateway);
+
+        var result = await handler.Handle(new GetCheckoutStatusQuery(order.Id, null, Cancelled: true), CancellationToken.None);
+
+        Assert.Equal("payment_rejected", result.OrderStatus);
+        Assert.Equal("rejected", result.PaymentStatus);
+        Assert.False(result.GatewayUnavailable);
+        Assert.Null(gateway.LastPaymentIdRequested);
+        Assert.Null(gateway.LastExternalReferenceSearched);
+    }
+
+    [Fact]
+    public async Task Cancelled_OnAnAlreadyApprovedPayment_LeavesItApproved()
+    {
+        var (context, user, gateway, order, _) = await SeedPendingOrder();
+        gateway.PaymentToReturn = new() { Id = "pay-1", Status = "approved", ExternalReference = order.Id.ToString() };
+        var handler = new GetCheckoutStatusQueryHandler(context, user, gateway);
+
+        // First confirm it normally (as if the buyer's redirect raced the "cancelled" one)...
+        await handler.Handle(new GetCheckoutStatusQuery(order.Id, "pay-1"), CancellationToken.None);
+        // ...then a stray cancelled check comes in — idempotency guard must ignore it.
+        var result = await handler.Handle(new GetCheckoutStatusQuery(order.Id, null, Cancelled: true), CancellationToken.None);
+
+        Assert.Equal("payment_approved", result.OrderStatus);
+        Assert.Equal("approved", result.PaymentStatus);
     }
 }

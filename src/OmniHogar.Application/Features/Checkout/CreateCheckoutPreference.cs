@@ -11,9 +11,10 @@ namespace OmniHogar.Application.Features.Checkout;
 public record CustomerAddressInput(string Address, string City, string? Neighborhood, string? Reference);
 
 /// <summary>
-/// Turns the client's active cart into an order and starts a Mercado Pago Checkout Pro payment
+/// Turns the client's active cart into an order and starts a Stripe Checkout payment
 /// (HU-08 + HU-09). <see cref="PaymentMethod"/> is one of the values <see cref="Payment"/>
-/// already accepts: card, pse, wallet.
+/// already accepts: card, pse, wallet — recorded for business reporting even though every one
+/// of them is charged as a card through Stripe today (see <c>StripeCheckoutClient</c>).
 /// </summary>
 public record CreateCheckoutPreferenceCommand(CustomerAddressInput Address, string PaymentMethod) : IRequest<CheckoutDto>;
 
@@ -47,18 +48,18 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
-    private readonly IMercadoPagoClient _mercadoPago;
-    private readonly IMercadoPagoUrls _urls;
+    private readonly IPaymentGatewayClient _paymentGateway;
+    private readonly IPaymentGatewayUrls _urls;
 
     public CreateCheckoutPreferenceCommandHandler(
         IApplicationDbContext context,
         ICurrentUserService currentUser,
-        IMercadoPagoClient mercadoPago,
-        IMercadoPagoUrls urls)
+        IPaymentGatewayClient paymentGateway,
+        IPaymentGatewayUrls urls)
     {
         _context = context;
         _currentUser = currentUser;
-        _mercadoPago = mercadoPago;
+        _paymentGateway = paymentGateway;
         _urls = urls;
     }
 
@@ -114,6 +115,9 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
         };
         _context.CustomerAddresses.Add(address);
 
+        // Product.Price is the final, IVA-inclusive price shown in the catalog/cart — Colombian
+        // retail prices must already include tax, so nothing is added here. What the buyer sees
+        // at checkout is exactly what Stripe charges.
         var subtotal = cart.Items.Sum(i => i.UnitPrice * i.Quantity);
 
         var order = new Order
@@ -150,15 +154,15 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
         };
         _context.Payments.Add(payment);
 
-        // Persist before calling Mercado Pago: if the gateway call below fails, the order and
-        // payment already exist — nothing is lost (HU-09 crit. 3).
+        // Persist before calling the gateway: if the call below fails, the order and payment
+        // already exist — nothing is lost (HU-09 crit. 3).
         await _context.SaveChangesAsync(cancellationToken);
 
         string initPoint;
         try
         {
             var resultUrl = $"{_urls.FrontendBaseUrl}/checkout/result?order={order.Id}";
-            var preference = await _mercadoPago.CreatePreferenceAsync(new MercadoPagoPreferenceRequest
+            var preference = await _paymentGateway.CreatePreferenceAsync(new PaymentGatewayPreferenceRequest
             {
                 Title = $"Pedido {order.OrderNumber}",
                 UnitPrice = order.Total,
@@ -168,7 +172,6 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
                 FailureUrl = resultUrl,
                 PendingUrl = resultUrl,
                 NotificationUrl = $"{_urls.BackendPublicBaseUrl}/api/checkout/webhook",
-                ExcludedPaymentTypes = ExcludedPaymentTypesFor(request.PaymentMethod),
             }, cancellationToken);
 
             initPoint = preference.InitPoint;
@@ -183,16 +186,6 @@ public class CreateCheckoutPreferenceCommandHandler : IRequestHandler<CreateChec
 
         return new CheckoutDto { OrderId = order.Id, OrderNumber = order.OrderNumber, InitPoint = initPoint };
     }
-
-    /// <summary>Mercado Pago payment_type ids to hide so only the chosen method family shows.
-    /// Ids per la documentación de Mercado Pago Colombia — ajustar si cambian.</summary>
-    internal static IReadOnlyList<string> ExcludedPaymentTypesFor(string paymentMethod) => paymentMethod switch
-    {
-        "card" => ["ticket", "bank_transfer", "account_money"],
-        "pse" => ["credit_card", "debit_card", "ticket", "account_money"],
-        "wallet" => ["credit_card", "debit_card", "ticket", "bank_transfer"],
-        _ => [],
-    };
 
     private static string GenerateOrderNumber() =>
         $"WEB-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Random.Shared.Next(1000, 9999)}";
