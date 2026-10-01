@@ -26,6 +26,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = SeededPermissionIds.InventarioConsultar, Name = AppPermissions.InventarioConsultar, Description = "Consultar unidades disponibles de un producto." },
             new Permission { Id = SeededPermissionIds.InventarioAjustar, Name = AppPermissions.InventarioAjustar, Description = "Agregar o ajustar unidades de inventario." },
             new Permission { Id = SeededPermissionIds.PedidosConsultar, Name = AppPermissions.PedidosConsultar, Description = "Consultar pedidos." },
+            new Permission { Id = SeededPermissionIds.PedidosActualizarEstado, Name = AppPermissions.PedidosActualizarEstado, Description = "Actualizar el estado de un pedido." },
             new Permission { Id = SeededPermissionIds.PosRegistrarVenta, Name = AppPermissions.PosRegistrarVenta, Description = "Registrar ventas en el punto de venta." });
     }
 }

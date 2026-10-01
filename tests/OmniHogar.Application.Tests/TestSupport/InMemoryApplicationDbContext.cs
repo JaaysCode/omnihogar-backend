@@ -28,6 +28,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
@@ -115,6 +116,13 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.Ignore(o => o.Advisor);
             builder.Ignore(o => o.StatusHistory);
             builder.Ignore(o => o.Dispatch);
+        });
+
+        modelBuilder.Entity<OrderStatusHistory>(builder =>
+        {
+            builder.HasKey(h => h.Id);
+            builder.HasOne(h => h.Order).WithMany().HasForeignKey(h => h.OrderId);
+            builder.Ignore(h => h.User);
         });
 
         modelBuilder.Entity<OrderItem>(builder =>

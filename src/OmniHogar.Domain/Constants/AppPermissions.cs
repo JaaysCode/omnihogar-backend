@@ -14,6 +14,7 @@ public static class AppPermissions
     public const string InventarioConsultar = "inventario.consultar";
     public const string InventarioAjustar = "inventario.ajustar";
     public const string PedidosConsultar = "pedidos.consultar";
+    public const string PedidosActualizarEstado = "pedidos.actualizar_estado";
     public const string PosRegistrarVenta = "pos.registrar_venta";
 
     public static readonly IReadOnlyList<string> All =
@@ -24,6 +25,7 @@ public static class AppPermissions
         InventarioConsultar,
         InventarioAjustar,
         PedidosConsultar,
+        PedidosActualizarEstado,
         PosRegistrarVenta,
     ];
 }

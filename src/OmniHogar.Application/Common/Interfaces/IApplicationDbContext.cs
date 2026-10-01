@@ -21,6 +21,7 @@ public interface IApplicationDbContext
     DbSet<InventoryMovement> InventoryMovements { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
+    DbSet<OrderStatusHistory> OrderStatusHistories { get; }
     DbSet<Cart> Carts { get; }
     DbSet<CartItem> CartItems { get; }
     DbSet<CustomerAddress> CustomerAddresses { get; }

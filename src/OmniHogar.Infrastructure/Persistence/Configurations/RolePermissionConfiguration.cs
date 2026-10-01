@@ -53,6 +53,7 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
                  {
                      SeededPermissionIds.InventarioConsultar,
                      SeededPermissionIds.PedidosConsultar,
+                     SeededPermissionIds.PedidosActualizarEstado,
                  })
         {
             yield return new RolePermission { RoleId = SeededRoleIds.CoordinadorDeDespacho, PermissionId = permissionId };
@@ -78,6 +79,7 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
         SeededPermissionIds.InventarioConsultar,
         SeededPermissionIds.InventarioAjustar,
         SeededPermissionIds.PedidosConsultar,
+        SeededPermissionIds.PedidosActualizarEstado,
         SeededPermissionIds.PosRegistrarVenta,
     ];
 }
