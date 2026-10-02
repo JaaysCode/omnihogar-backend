@@ -25,7 +25,11 @@ public class MappingProfile : Profile
 
         CreateMap<Order, Features.Orders.OrderDetailDto>()
             .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.User.FirstName + " " + s.User.LastName))
-            .ForMember(d => d.CustomerEmail, opt => opt.MapFrom(s => s.User.Email));
+            .ForMember(d => d.CustomerEmail, opt => opt.MapFrom(s => s.User.Email))
+            .ForMember(d => d.DispatchNotified, opt => opt.Ignore());
+
+        CreateMap<Notification, Features.Notifications.NotificationDto>()
+            .ForMember(d => d.OrderNumber, opt => opt.MapFrom(s => s.Order != null ? s.Order.OrderNumber : null));
 
         CreateMap<OrderItem, Features.Orders.OrderItemDto>()
             .ForMember(d => d.ProductName, opt => opt.MapFrom(s => s.Product.Name))

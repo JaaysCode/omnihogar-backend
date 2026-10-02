@@ -2,6 +2,7 @@ using AutoMapper;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Entities;
 using OmniHogar.Domain.Exceptions;
@@ -84,12 +85,18 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
     private readonly ICurrentUserService _currentUser;
+    private readonly ILogger<UpdateOrderStatusCommandHandler>? _logger;
 
-    public UpdateOrderStatusCommandHandler(IApplicationDbContext context, IMapper mapper, ICurrentUserService currentUser)
+    public UpdateOrderStatusCommandHandler(
+        IApplicationDbContext context,
+        IMapper mapper,
+        ICurrentUserService currentUser,
+        ILogger<UpdateOrderStatusCommandHandler>? logger = null)
     {
         _context = context;
         _mapper = mapper;
         _currentUser = currentUser;
+        _logger = logger;
     }
 
     public async Task<OrderDetailDto> Handle(UpdateOrderStatusCommand request, CancellationToken cancellationToken)
@@ -98,6 +105,7 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
             .Include(o => o.User)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+            .Include(o => o.Dispatch)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken)
             ?? throw NotFoundException.Pedido(request.OrderId);
 
@@ -115,6 +123,17 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return _mapper.Map<OrderDetailDto>(order);
+        // HU-13: entering "preparing" is the "pedido listo para iniciar despacho" trigger —
+        // open the Dispatch record and notify the despacho team in-app. Best-effort: a failure
+        // here doesn't roll back or fail this request (crit. 3), see DispatchNotifier.
+        bool? dispatchNotified = null;
+        if (request.NewStatus == "preparing")
+        {
+            dispatchNotified = await DispatchNotifier.NotifyAsync(_context, order, _logger, cancellationToken);
+        }
+
+        var dto = _mapper.Map<OrderDetailDto>(order);
+        dto.DispatchNotified = dispatchNotified;
+        return dto;
     }
 }

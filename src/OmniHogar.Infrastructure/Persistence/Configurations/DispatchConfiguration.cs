@@ -20,6 +20,7 @@ public class DispatchConfiguration : IEntityTypeConfiguration<Dispatch>
         builder.Property(d => d.Status).HasColumnName("status").IsRequired().HasMaxLength(20).HasDefaultValue("pending");
         builder.Property(d => d.StartedAt).HasColumnName("started_at");
         builder.Property(d => d.PackedAt).HasColumnName("packed_at");
+        builder.Property(d => d.NotifiedAt).HasColumnName("notified_at");
 
         builder.HasIndex(d => d.OrderId).IsUnique();
 

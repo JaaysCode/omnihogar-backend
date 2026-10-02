@@ -34,6 +34,8 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Dispatch> Dispatches => Set<Dispatch>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
@@ -112,10 +114,26 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.HasOne(o => o.User).WithMany().HasForeignKey(o => o.UserId);
             builder.HasOne(o => o.ShippingAddress).WithMany().HasForeignKey(o => o.ShippingAddressId);
             builder.HasMany(o => o.Payments).WithOne(p => p.Order).HasForeignKey(p => p.OrderId);
+            builder.HasMany(o => o.StatusHistory).WithOne(h => h.Order).HasForeignKey(h => h.OrderId);
+            builder.HasOne(o => o.Dispatch).WithOne(d => d.Order).HasForeignKey<Dispatch>(d => d.OrderId);
             builder.Ignore(o => o.Facility);
             builder.Ignore(o => o.Advisor);
-            builder.Ignore(o => o.StatusHistory);
-            builder.Ignore(o => o.Dispatch);
+        });
+
+        modelBuilder.Entity<Dispatch>(builder =>
+        {
+            builder.HasKey(d => d.Id);
+            builder.Ignore(d => d.SourceFacility);
+            builder.Ignore(d => d.Handler);
+            builder.Ignore(d => d.ShippingLabels);
+        });
+
+        modelBuilder.Entity<Notification>(builder =>
+        {
+            builder.HasKey(n => n.Id);
+            builder.HasOne(n => n.User).WithMany().HasForeignKey(n => n.UserId);
+            builder.HasOne(n => n.Order).WithMany().HasForeignKey(n => n.OrderId);
+            builder.Ignore(n => n.Template);
         });
 
         modelBuilder.Entity<OrderStatusHistory>(builder =>

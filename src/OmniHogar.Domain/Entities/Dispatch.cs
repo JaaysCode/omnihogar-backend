@@ -19,5 +19,9 @@ public class Dispatch
     public DateTime? StartedAt { get; set; }
     public DateTime? PackedAt { get; set; }
 
+    /// <summary>When the "pedido listo para despacho" notification (HU-13) was successfully
+    /// delivered to the despacho team. Null means it still needs to be sent/retried.</summary>
+    public DateTime? NotifiedAt { get; set; }
+
     public ICollection<ShippingLabel> ShippingLabels { get; set; } = new List<ShippingLabel>();
 }

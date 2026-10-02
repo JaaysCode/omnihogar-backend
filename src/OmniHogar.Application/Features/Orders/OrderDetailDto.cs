@@ -24,4 +24,11 @@ public class OrderDetailDto
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public List<OrderItemDto> Items { get; set; } = new();
+
+    /// <summary>
+    /// HU-13 — set only on the response of the call that moved this order into <c>preparing</c>.
+    /// True: despacho team notified. False: the order is "preparing" but notification failed and
+    /// is pending retry. Null on every other request (status unchanged by this call).
+    /// </summary>
+    public bool? DispatchNotified { get; set; }
 }
