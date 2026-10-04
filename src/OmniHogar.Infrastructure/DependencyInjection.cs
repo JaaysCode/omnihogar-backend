@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Constants;
 using OmniHogar.Infrastructure.Email;
 using OmniHogar.Infrastructure.Identity;
+using OmniHogar.Infrastructure.Llm;
 using OmniHogar.Infrastructure.Payments;
 using OmniHogar.Infrastructure.Persistence;
 using OmniHogar.Infrastructure.Services;
@@ -49,6 +51,21 @@ public static class DependencyInjection
         // Password recovery (HU-15) — sends real email via an SMTP relay (Brevo).
         services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
         services.AddScoped<IEmailService, SmtpEmailService>();
+
+        // Chatbot NLU (HU-19) — OpenRouter, modelo gratuito. Requerido: todo el chatbot deja de
+        // funcionar sin esto, así que falla fuerte en el arranque (vía docker-compose's ${...:?})
+        // en vez de fallar silenciosamente en cada mensaje, a diferencia de Stripe.
+        services.Configure<OpenRouterOptions>(configuration.GetSection(OpenRouterOptions.SectionName));
+        services.AddHttpClient<OpenRouterClient>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
+            // OpenRouter pide identificar la app integradora — opcional pero buena práctica.
+            client.DefaultRequestHeaders.Add("HTTP-Referer", "https://omnihogar.local");
+            client.DefaultRequestHeaders.Add("X-Title", "OmniHogar");
+        });
+        services.AddScoped<ILlmClient>(sp => sp.GetRequiredService<OpenRouterClient>());
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
             ?? throw new InvalidOperationException("Jwt settings not configured.");

@@ -30,6 +30,9 @@ public interface IApplicationDbContext
     DbSet<Dispatch> Dispatches { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
+    DbSet<Conversation> Conversations { get; }
+    DbSet<Message> Messages { get; }
+    DbSet<ConversationOrder> ConversationOrders { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -37,6 +37,9 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Dispatch> Dispatches => Set<Dispatch>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<ConversationOrder> ConversationOrders => Set<ConversationOrder>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
@@ -175,6 +178,27 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(t => t.Id);
             builder.HasOne(t => t.User).WithMany().HasForeignKey(t => t.UserId);
+        });
+
+        modelBuilder.Entity<Conversation>(builder =>
+        {
+            builder.HasKey(c => c.Id);
+            builder.HasOne(c => c.Customer).WithMany().HasForeignKey(c => c.CustomerId);
+            builder.Ignore(c => c.Messages);
+            builder.Ignore(c => c.ConversationOrders);
+        });
+
+        modelBuilder.Entity<Message>(builder =>
+        {
+            builder.HasKey(m => m.Id);
+            builder.HasOne(m => m.Conversation).WithMany().HasForeignKey(m => m.ConversationId);
+        });
+
+        modelBuilder.Entity<ConversationOrder>(builder =>
+        {
+            builder.HasKey(co => new { co.ConversationId, co.OrderId });
+            builder.HasOne(co => co.Conversation).WithMany().HasForeignKey(co => co.ConversationId);
+            builder.HasOne(co => co.Order).WithMany().HasForeignKey(co => co.OrderId);
         });
 
         modelBuilder.Entity<CustomerAddress>(builder =>
