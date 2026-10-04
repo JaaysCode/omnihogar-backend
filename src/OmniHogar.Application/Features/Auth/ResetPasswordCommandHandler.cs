@@ -9,7 +9,7 @@ using OmniHogar.Domain.Exceptions;
 
 namespace OmniHogar.Application.Features.Auth;
 
-public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
+public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Unit>
 {
     private readonly IApplicationDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
@@ -20,7 +20,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
         _passwordHasher = passwordHasher;
     }
 
-    public async Task Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(request.Token)));
 
@@ -47,5 +47,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        return Unit.Value;
     }
 }

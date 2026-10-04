@@ -7,7 +7,7 @@ using OmniHogar.Domain.Entities;
 
 namespace OmniHogar.Application.Features.Auth;
 
-public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand>
+public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Unit>
 {
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(30);
 
@@ -20,7 +20,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         _emailService = emailService;
     }
 
-    public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var user = await _context.Users.FirstAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
@@ -37,5 +37,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         await _context.SaveChangesAsync(cancellationToken);
 
         await _emailService.SendPasswordResetEmailAsync(user.Email, rawToken, cancellationToken);
+
+        return Unit.Value;
     }
 }
