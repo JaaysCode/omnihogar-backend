@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OmniHogar.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using OmniHogar.Infrastructure.Persistence;
 namespace OmniHogar.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261001204657_AddPasswordResetTokens")]
+    partial class AddPasswordResetTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -273,10 +276,6 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("HandlerId")
                         .HasColumnType("uuid")
                         .HasColumnName("handler_id");
-
-                    b.Property<DateTime?>("NotifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("notified_at");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid")
@@ -599,20 +598,6 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                         .HasDefaultValue("pending")
                         .HasColumnName("delivery_status");
 
-                    b.Property<bool>("IsRead")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_read");
-
-                    b.Property<Guid?>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("read_at");
-
                     b.Property<Guid?>("TemplateId")
                         .HasColumnType("uuid")
                         .HasColumnName("template_id");
@@ -629,19 +614,17 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
-
                     b.HasIndex("TemplateId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("notifications", null, t =>
                         {
-                            t.HasCheckConstraint("CK_notifications_channel", "channel IN ('email','whatsapp','sms','in_app')");
+                            t.HasCheckConstraint("CK_notifications_channel", "channel IN ('email','whatsapp','sms')");
 
                             t.HasCheckConstraint("CK_notifications_delivery_status", "delivery_status IN ('pending','sent','failed')");
 
-                            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered','dispatch_ready')");
+                            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered')");
                         });
                 });
 
@@ -1704,11 +1687,6 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("OmniHogar.Domain.Entities.Notification", b =>
                 {
-                    b.HasOne("OmniHogar.Domain.Entities.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("OmniHogar.Domain.Entities.NotificationTemplate", "Template")
                         .WithMany("Notifications")
                         .HasForeignKey("TemplateId")
@@ -1719,8 +1697,6 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Order");
 
                     b.Navigation("Template");
 

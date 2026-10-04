@@ -29,6 +29,7 @@ public interface IApplicationDbContext
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<Dispatch> Dispatches { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<PasswordResetToken> PasswordResetTokens { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

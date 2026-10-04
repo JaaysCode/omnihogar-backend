@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Cart> Carts => Set<Cart>();

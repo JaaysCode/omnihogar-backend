@@ -36,6 +36,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Dispatch> Dispatches => Set<Dispatch>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     // Bare-bones model: only what the handlers/validators under test touch. Navigation
     // properties pointing at entities outside this fake context's DbSets are ignored
@@ -50,6 +51,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.Ignore(u => u.Orders);
             builder.Ignore(u => u.Facility);
             builder.Ignore(u => u.RefreshTokens);
+            builder.Ignore(u => u.PasswordResetTokens);
         });
 
         modelBuilder.Entity<Product>(builder =>
@@ -167,6 +169,12 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         {
             builder.HasKey(rt => rt.Id);
             builder.HasOne(rt => rt.User).WithMany().HasForeignKey(rt => rt.UserId);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(builder =>
+        {
+            builder.HasKey(t => t.Id);
+            builder.HasOne(t => t.User).WithMany().HasForeignKey(t => t.UserId);
         });
 
         modelBuilder.Entity<CustomerAddress>(builder =>

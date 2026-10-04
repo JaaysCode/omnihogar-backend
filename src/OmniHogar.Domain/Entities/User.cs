@@ -26,4 +26,5 @@ public class User
     public ICollection<CustomerAddress> Addresses { get; set; } = new List<CustomerAddress>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
 }

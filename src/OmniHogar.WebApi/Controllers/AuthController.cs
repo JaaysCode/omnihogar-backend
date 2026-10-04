@@ -116,6 +116,24 @@ public class AuthController : ControllerBase
         return new AuthResponse(accessToken, rawRefreshToken, expiresAtUtc);
     }
 
+    /// <summary>Starts password recovery for a registered email (HU-15 crit. 1/2).</summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordCommand command, CancellationToken cancellationToken)
+    {
+        await _sender.Send(command, cancellationToken);
+        return Ok(new { message = "Revisa tu correo para continuar con la recuperación." });
+    }
+
+    /// <summary>Consumes a password-recovery token to set a new password (HU-15 crit. 3).</summary>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword(ResetPasswordCommand command, CancellationToken cancellationToken)
+    {
+        await _sender.Send(command, cancellationToken);
+        return Ok(new { message = "Contraseña actualizada. Ya puedes iniciar sesión." });
+    }
+
     private async Task RevokeAllActiveTokensAsync(Guid userId, CancellationToken cancellationToken)
     {
         var activeTokens = await _context.RefreshTokens

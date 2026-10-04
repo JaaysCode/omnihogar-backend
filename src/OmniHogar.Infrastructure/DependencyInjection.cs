@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OmniHogar.Application.Common.Interfaces;
 using OmniHogar.Domain.Constants;
+using OmniHogar.Infrastructure.Email;
 using OmniHogar.Infrastructure.Identity;
 using OmniHogar.Infrastructure.Payments;
 using OmniHogar.Infrastructure.Persistence;
@@ -44,6 +45,10 @@ public static class DependencyInjection
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
         services.AddScoped<IPaymentGatewayUrls>(sp => sp.GetRequiredService<IOptions<StripeOptions>>().Value);
         services.AddScoped<IPaymentGatewayClient, StripeCheckoutClient>();
+
+        // Password recovery (HU-15) — sends real email via an SMTP relay (Brevo).
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
             ?? throw new InvalidOperationException("Jwt settings not configured.");

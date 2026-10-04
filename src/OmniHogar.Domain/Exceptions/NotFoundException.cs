@@ -48,4 +48,8 @@ public class NotFoundException : Exception
     /// <summary>404 si la cuenta del usuario autenticado ya no existe (HU-16 — perfil).</summary>
     public static NotFoundException Usuario(object key) =>
         new("User", key, "El usuario solicitado no existe.");
+
+    /// <summary>404 para un token de recuperación de contraseña inexistente, expirado o ya usado (HU-15).</summary>
+    public static NotFoundException TokenDeRecuperacion(object key) =>
+        new("PasswordResetToken", key, "El enlace de recuperación no es válido o ya expiró.");
 }
