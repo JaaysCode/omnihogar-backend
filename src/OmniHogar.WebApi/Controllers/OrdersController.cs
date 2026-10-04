@@ -23,11 +23,13 @@ public class OrdersController : ControllerBase
         _sender = sender;
     }
 
+    /// <summary>Cross-channel order list, optionally filtered to one status (HU-12 — e.g.
+    /// <c>?status=preparing</c> for the dispatch coordinator's pending-preparation view).</summary>
     [HttpGet]
     [Authorize(Policy = AppPermissions.PedidosConsultar)]
-    public async Task<ActionResult<List<OrderDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<OrderDto>>> GetAll([FromQuery] string? status, CancellationToken cancellationToken)
     {
-        return await _sender.Send(new GetOrdersQuery(), cancellationToken);
+        return await _sender.Send(new GetOrdersQuery(status), cancellationToken);
     }
 
     [HttpGet("{id:guid}")]

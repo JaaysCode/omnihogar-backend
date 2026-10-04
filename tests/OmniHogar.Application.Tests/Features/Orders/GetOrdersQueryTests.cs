@@ -102,6 +102,61 @@ public class GetOrdersQueryTests
     }
 
     [Fact]
+    public async Task StatusFilter_OnlyReturnsOrdersInThatStatus()
+    {
+        await using var context = InMemoryApplicationDbContext.Create();
+        var customer = SampleUser("Carla", "Ríos");
+        context.Users.Add(customer);
+
+        var preparing = new Order
+        {
+            OrderNumber = "ORD-020",
+            UserId = customer.Id,
+            User = customer,
+            Channel = "web",
+            Status = "preparing",
+            Subtotal = 10_000m,
+            Total = 11_900m,
+        };
+        var packed = new Order
+        {
+            OrderNumber = "ORD-021",
+            UserId = customer.Id,
+            User = customer,
+            Channel = "web",
+            Status = "packed",
+            Subtotal = 20_000m,
+            Total = 23_800m,
+        };
+        context.Orders.AddRange(preparing, packed);
+        await context.SaveChangesAsync(CancellationToken.None);
+
+        var handler = new GetOrdersQueryHandler(context, CreateMapper());
+        var result = await handler.Handle(new GetOrdersQuery("preparing"), CancellationToken.None);
+
+        var dto = Assert.Single(result);
+        Assert.Equal("ORD-020", dto.OrderNumber);
+    }
+
+    [Fact]
+    public async Task NoStatusFilter_ReturnsEveryOrderRegardlessOfStatus()
+    {
+        await using var context = InMemoryApplicationDbContext.Create();
+        var customer = SampleUser("Diego", "Salas");
+        context.Users.Add(customer);
+
+        context.Orders.AddRange(
+            new Order { OrderNumber = "ORD-030", UserId = customer.Id, User = customer, Channel = "web", Status = "preparing", Subtotal = 1m, Total = 1m },
+            new Order { OrderNumber = "ORD-031", UserId = customer.Id, User = customer, Channel = "web", Status = "packed", Subtotal = 1m, Total = 1m });
+        await context.SaveChangesAsync(CancellationToken.None);
+
+        var handler = new GetOrdersQueryHandler(context, CreateMapper());
+        var result = await handler.Handle(new GetOrdersQuery(), CancellationToken.None);
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
     public async Task NoOrders_ReturnsEmptyList()
     {
         await using var context = InMemoryApplicationDbContext.Create();
