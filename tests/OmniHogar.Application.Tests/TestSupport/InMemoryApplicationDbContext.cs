@@ -26,6 +26,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Facility> Facilities => Set<Facility>();
     public DbSet<Inventory> Inventory => Set<Inventory>();
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
+    public DbSet<InventoryTransfer> InventoryTransfers => Set<InventoryTransfer>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
@@ -111,6 +112,14 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.HasOne(m => m.Facility).WithMany().HasForeignKey(m => m.FacilityId);
             builder.Ignore(m => m.Order);
             builder.Ignore(m => m.User);
+        });
+
+        modelBuilder.Entity<InventoryTransfer>(builder =>
+        {
+            builder.HasKey(t => t.Id);
+            builder.HasOne(t => t.Product).WithMany().HasForeignKey(t => t.ProductId);
+            builder.HasOne(t => t.SourceFacility).WithMany().HasForeignKey(t => t.SourceFacilityId);
+            builder.HasOne(t => t.DestinationFacility).WithMany().HasForeignKey(t => t.DestinationFacilityId);
         });
 
         modelBuilder.Entity<Order>(builder =>

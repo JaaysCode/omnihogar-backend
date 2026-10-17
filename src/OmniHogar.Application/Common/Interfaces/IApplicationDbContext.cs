@@ -19,6 +19,7 @@ public interface IApplicationDbContext
     DbSet<Facility> Facilities { get; }
     DbSet<Inventory> Inventory { get; }
     DbSet<InventoryMovement> InventoryMovements { get; }
+    DbSet<InventoryTransfer> InventoryTransfers { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
     DbSet<OrderStatusHistory> OrderStatusHistories { get; }

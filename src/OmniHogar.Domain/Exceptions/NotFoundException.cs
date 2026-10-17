@@ -49,6 +49,10 @@ public class NotFoundException : Exception
     public static NotFoundException PedidoNoEncontrado(object key) =>
         new("Order", key, "El pedido no fue encontrado.");
 
+    /// <summary>404 cuando la transferencia de inventario no existe (HU transferencias).</summary>
+    public static NotFoundException Transferencia(object key) =>
+        new("InventoryTransfer", key, "La transferencia solicitada no existe.");
+
     /// <summary>404 si la cuenta del usuario autenticado ya no existe (HU-16 — perfil).</summary>
     public static NotFoundException Usuario(object key) =>
         new("User", key, "El usuario solicitado no existe.");
