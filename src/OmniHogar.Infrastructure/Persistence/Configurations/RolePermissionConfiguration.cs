@@ -81,5 +81,6 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
         SeededPermissionIds.PedidosConsultar,
         SeededPermissionIds.PedidosActualizarEstado,
         SeededPermissionIds.PosRegistrarVenta,
+        SeededPermissionIds.ReportesVer,
     ];
 }

@@ -16,6 +16,7 @@ public static class AppPermissions
     public const string PedidosConsultar = "pedidos.consultar";
     public const string PedidosActualizarEstado = "pedidos.actualizar_estado";
     public const string PosRegistrarVenta = "pos.registrar_venta";
+    public const string ReportesVer = "reportes.ver";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -27,5 +28,6 @@ public static class AppPermissions
         PedidosConsultar,
         PedidosActualizarEstado,
         PosRegistrarVenta,
+        ReportesVer,
     ];
 }

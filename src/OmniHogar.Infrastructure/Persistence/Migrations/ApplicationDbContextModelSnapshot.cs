@@ -1032,6 +1032,12 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                             Id = new Guid("11110000-0000-0000-0000-000000000007"),
                             Description = "Registrar ventas en el punto de venta.",
                             Name = "pos.registrar_venta"
+                        },
+                        new
+                        {
+                            Id = new Guid("11110000-0000-0000-0000-000000000009"),
+                            Description = "Consultar reportes de ventas.",
+                            Name = "reportes.ver"
                         });
                 });
 
@@ -1283,6 +1289,11 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
                         {
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
                             PermissionId = new Guid("11110000-0000-0000-0000-000000000007")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            PermissionId = new Guid("11110000-0000-0000-0000-000000000009")
                         },
                         new
                         {
