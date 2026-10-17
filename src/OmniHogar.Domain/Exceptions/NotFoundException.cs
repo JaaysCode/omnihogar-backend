@@ -45,6 +45,10 @@ public class NotFoundException : Exception
     public static NotFoundException Pedido(object key) =>
         new("Order", key, "El pedido solicitado no existe.");
 
+    /// <summary>404 cuando el pedido consultado no existe o no es del cliente (HU-14 — seguimiento).</summary>
+    public static NotFoundException PedidoNoEncontrado(object key) =>
+        new("Order", key, "El pedido no fue encontrado.");
+
     /// <summary>404 si la cuenta del usuario autenticado ya no existe (HU-16 — perfil).</summary>
     public static NotFoundException Usuario(object key) =>
         new("User", key, "El usuario solicitado no existe.");

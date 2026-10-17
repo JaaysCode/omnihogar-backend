@@ -144,7 +144,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<OrderStatusHistory>(builder =>
         {
             builder.HasKey(h => h.Id);
-            builder.HasOne(h => h.Order).WithMany().HasForeignKey(h => h.OrderId);
+            builder.HasOne(h => h.Order).WithMany(o => o.StatusHistory).HasForeignKey(h => h.OrderId);
             builder.Ignore(h => h.User);
         });
 

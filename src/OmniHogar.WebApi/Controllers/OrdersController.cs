@@ -76,6 +76,15 @@ public class OrdersController : ControllerBase
     {
         return await _sender.Send(new GetMyOrderByIdQuery(id), cancellationToken);
     }
+
+    /// <summary>Tracking (current status + status trail) of one of the authenticated customer's
+    /// own orders (HU-14 seguimiento). 404 when the order doesn't exist or isn't theirs.</summary>
+    [HttpGet("mine/{id:guid}/tracking")]
+    [Authorize]
+    public async Task<ActionResult<OrderTrackingDto>> GetMineTracking(Guid id, CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetMyOrderTrackingQuery(id), cancellationToken);
+    }
 }
 
 /// <summary>Request body for <see cref="OrdersController.RegisterStoreSale"/>.</summary>
