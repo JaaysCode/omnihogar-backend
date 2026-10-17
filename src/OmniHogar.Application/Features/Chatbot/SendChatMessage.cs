@@ -41,17 +41,20 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
     private readonly ICurrentUserService _currentUser;
     private readonly ILlmClient _llm;
     private readonly IRequestHandler<SearchProductsQuery, List<ProductDto>> _searchProducts;
+    private readonly IRequestHandler<RecommendProductsQuery, List<ProductDto>> _recommendProducts;
 
     public SendChatMessageCommandHandler(
         IApplicationDbContext context,
         ICurrentUserService currentUser,
         ILlmClient llm,
-        IRequestHandler<SearchProductsQuery, List<ProductDto>> searchProducts)
+        IRequestHandler<SearchProductsQuery, List<ProductDto>> searchProducts,
+        IRequestHandler<RecommendProductsQuery, List<ProductDto>> recommendProducts)
     {
         _context = context;
         _currentUser = currentUser;
         _llm = llm;
         _searchProducts = searchProducts;
+        _recommendProducts = recommendProducts;
     }
 
     public async Task<ChatTurnResultDto> Handle(SendChatMessageCommand request, CancellationToken cancellationToken)
@@ -91,12 +94,20 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
         string reply;
         List<ProductDto>? matchedProducts = null;
         ChatOrderCreatedDto? orderCreated = null;
+        var isRecommendation = false;
 
         switch (intent.Type)
         {
             case ChatIntentType.SearchProduct:
                 matchedProducts = await _searchProducts.Handle(new SearchProductsQuery(intent.ProductQuery, null), cancellationToken);
                 reply = ComposeSearchReply(intent.ProductQuery, matchedProducts);
+                break;
+
+            case ChatIntentType.RecommendProducts:
+                isRecommendation = true;
+                matchedProducts = await _recommendProducts.Handle(
+                    new RecommendProductsQuery(intent.Keywords ?? []), cancellationToken);
+                reply = ComposeRecommendationReply(intent.Keywords, matchedProducts);
                 break;
 
             case ChatIntentType.ConfirmOrder:
@@ -119,7 +130,7 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
 
         var draftDto = BuildDraftDto(request.DraftItems, draftProducts);
 
-        return new ChatTurnResultDto(conversation.Id, reply, draftDto, matchedProducts, orderCreated);
+        return new ChatTurnResultDto(conversation.Id, reply, draftDto, matchedProducts, orderCreated, isRecommendation);
     }
 
     private static string ComposeSearchReply(string? query, List<ProductDto> matches)
@@ -140,6 +151,23 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
         });
 
         return $"Encontré esto:\n{string.Join("\n", lines)}\n¿Quieres agregar alguno a tu pedido? Dime cuál y cuántas unidades.";
+    }
+
+    private static string ComposeRecommendationReply(IReadOnlyList<string>? keywords, List<ProductDto> matches)
+    {
+        if (keywords is null || keywords.All(string.IsNullOrWhiteSpace))
+        {
+            return "Cuéntame un poco más sobre lo que necesitas (para qué lo vas a usar, qué tipo de producto te interesa) y te recomiendo opciones.";
+        }
+
+        if (matches.Count == 0)
+        {
+            return "No encontré productos relacionados con tu solicitud. Puedes hacer una nueva consulta describiendo de otra forma lo que necesitas.";
+        }
+
+        var lines = matches.Select(p => $"- {p.Name}: ${p.Price:N0}");
+
+        return $"Te recomiendo estos productos:\n{string.Join("\n", lines)}\n¿Quieres agregar alguno a tu pedido? Dime cuál y cuántas unidades.";
     }
 
     private static List<ChatDraftItemDto> BuildDraftDto(IReadOnlyList<DraftItemInput> items, Dictionary<Guid, Product> products)

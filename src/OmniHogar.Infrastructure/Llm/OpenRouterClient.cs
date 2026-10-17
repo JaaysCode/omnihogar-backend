@@ -24,12 +24,18 @@ public class OpenRouterClient : ILlmClient
     private const string SystemPrompt = """
         Eres el asistente de compras de OmniHogar. Tu única tarea es interpretar el último
         mensaje del cliente y devolver SOLO un objeto JSON, sin texto adicional, con esta forma:
-        {"type": "search_product" | "confirm_order" | "unknown", "productQuery": string o null, "quantity": number o null}
+        {"type": "search_product" | "recommend_products" | "confirm_order" | "unknown", "productQuery": string o null, "quantity": number o null, "keywords": [string] o null}
 
         - "search_product": el cliente menciona o describe un producto que quiere buscar o
           agregar a su pedido. Extrae en "productQuery" el nombre o palabra clave del producto
           (sin cantidades ni relleno). Si menciona una cantidad, ponla en "quantity"; si no,
           deja "quantity" en null.
+        - "recommend_products": el cliente pide una recomendación o describe una necesidad,
+          uso o interés sin nombrar un producto concreto (por ejemplo "recomiéndame algo para
+          limpiar el piso", "qué me sugieres para una cocina pequeña", "un regalo para mi mamá").
+          Pon en "keywords" de 1 a 6 palabras clave en español, en minúscula y en singular,
+          con los tipos de producto, usos o categorías que encajan con lo pedido (incluye
+          sinónimos). Deja "productQuery" en null.
         - "confirm_order": el cliente confirma que quiere finalizar o confirmar su pedido actual
           (por ejemplo "sí, confírmalo", "eso es todo", "confirma el pedido").
         - "unknown": saludo, charla, o cualquier mensaje que no identifique un producto ni
@@ -98,6 +104,7 @@ public class OpenRouterClient : ILlmClient
         return intent.Type switch
         {
             "search_product" => new ChatIntent(ChatIntentType.SearchProduct, intent.ProductQuery, intent.Quantity),
+            "recommend_products" => new ChatIntent(ChatIntentType.RecommendProducts, Keywords: intent.Keywords),
             "confirm_order" => new ChatIntent(ChatIntentType.ConfirmOrder),
             _ => new ChatIntent(ChatIntentType.Unknown),
         };
@@ -121,5 +128,6 @@ public class OpenRouterClient : ILlmClient
         public string Type { get; set; } = string.Empty;
         public string? ProductQuery { get; set; }
         public int? Quantity { get; set; }
+        public List<string>? Keywords { get; set; }
     }
 }

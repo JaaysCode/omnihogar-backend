@@ -3,14 +3,20 @@ namespace OmniHogar.Application.Common.Interfaces;
 public enum ChatIntentType
 {
     SearchProduct,
+    RecommendProducts,
     ConfirmOrder,
     Unknown,
 }
 
 /// <summary>
 /// NLU result for one chat turn — only the fields relevant to <see cref="Type"/> are populated.
+/// <see cref="Keywords"/> carries the product types / uses / categories behind a recommendation request.
 /// </summary>
-public record ChatIntent(ChatIntentType Type, string? ProductQuery = null, int? Quantity = null);
+public record ChatIntent(
+    ChatIntentType Type,
+    string? ProductQuery = null,
+    int? Quantity = null,
+    IReadOnlyList<string>? Keywords = null);
 
 /// <summary>One line of the customer's in-progress order, given to the LLM as context only —
 /// never persisted or mutated by the LLM layer itself.</summary>

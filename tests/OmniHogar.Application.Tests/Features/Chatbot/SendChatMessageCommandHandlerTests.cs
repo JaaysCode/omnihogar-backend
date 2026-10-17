@@ -29,7 +29,7 @@ public class SendChatMessageCommandHandlerTests
     }
 
     private static SendChatMessageCommandHandler Handler(InMemoryApplicationDbContext context, FakeCurrentUserService user, FakeLlmClient llm) =>
-        new(context, user, llm, new SearchProductsQueryHandler(context));
+        new(context, user, llm, new SearchProductsQueryHandler(context), new RecommendProductsQueryHandler(context));
 
     [Fact]
     public async Task SearchWithMatch_ReturnsMatchedProductsAndDoesNotCreateAnOrder()

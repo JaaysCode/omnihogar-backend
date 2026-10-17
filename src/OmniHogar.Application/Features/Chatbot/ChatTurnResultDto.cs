@@ -8,10 +8,12 @@ public record ChatDraftItemDto(Guid ProductId, string Name, int Quantity, decima
 /// <summary>Populated only on the turn that confirmed and created the order (HU-19 crit. 2/3).</summary>
 public record ChatOrderCreatedDto(Guid OrderId, string OrderNumber, decimal Total);
 
-/// <summary>Result of one chat turn (HU-19).</summary>
+/// <summary>Result of one chat turn (HU-19). <c>IsRecommendation</c> is true when
+/// <c>MatchedProducts</c> answers a recommendation request rather than a product search.</summary>
 public record ChatTurnResultDto(
     Guid ConversationId,
     string Reply,
     List<ChatDraftItemDto> DraftItems,
     List<ProductDto>? MatchedProducts,
-    ChatOrderCreatedDto? OrderCreated);
+    ChatOrderCreatedDto? OrderCreated,
+    bool IsRecommendation = false);
