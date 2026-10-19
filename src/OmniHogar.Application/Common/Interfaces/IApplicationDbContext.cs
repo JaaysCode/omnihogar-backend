@@ -29,6 +29,7 @@ public interface IApplicationDbContext
     DbSet<Payment> Payments { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<Dispatch> Dispatches { get; }
+    DbSet<ShippingLabel> ShippingLabels { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
     DbSet<Conversation> Conversations { get; }

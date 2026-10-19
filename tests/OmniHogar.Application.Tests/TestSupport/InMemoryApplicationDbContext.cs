@@ -36,6 +36,7 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Dispatch> Dispatches => Set<Dispatch>();
+    public DbSet<ShippingLabel> ShippingLabels => Set<ShippingLabel>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
@@ -139,7 +140,12 @@ public class InMemoryApplicationDbContext : DbContext, IApplicationDbContext
             builder.HasKey(d => d.Id);
             builder.Ignore(d => d.SourceFacility);
             builder.Ignore(d => d.Handler);
-            builder.Ignore(d => d.ShippingLabels);
+            builder.HasMany(d => d.ShippingLabels).WithOne(l => l.Dispatch).HasForeignKey(l => l.DispatchId);
+        });
+
+        modelBuilder.Entity<ShippingLabel>(builder =>
+        {
+            builder.HasKey(l => l.Id);
         });
 
         modelBuilder.Entity<Notification>(builder =>

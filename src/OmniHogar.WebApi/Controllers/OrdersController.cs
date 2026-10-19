@@ -50,6 +50,22 @@ public class OrdersController : ControllerBase
         return await _sender.Send(new UpdateOrderStatusCommand(id, body.Status, body.Comment), cancellationToken);
     }
 
+    /// <summary>Generate the shipping guide of a packed order (HU-25) — dispatch coordinator/admin only.</summary>
+    [HttpPost("{id:guid}/shipping-label")]
+    [Authorize(Policy = AppPermissions.PedidosActualizarEstado)]
+    public async Task<ActionResult<ShippingLabelDto>> GenerateShippingLabel(Guid id, CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GenerateShippingLabelCommand(id), cancellationToken);
+    }
+
+    /// <summary>Consult the shipping guide already generated for an order (HU-25 crit. 2).</summary>
+    [HttpGet("{id:guid}/shipping-label")]
+    [Authorize(Policy = AppPermissions.PedidosConsultar)]
+    public async Task<ActionResult<ShippingLabelDto>> GetShippingLabel(Guid id, CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetShippingLabelQuery(id), cancellationToken);
+    }
+
     /// <summary>Register an in-store sale (HU-06) — creates the order and decrements stock.</summary>
     [HttpPost]
     [Authorize(Policy = AppPermissions.PosRegistrarVenta)]
