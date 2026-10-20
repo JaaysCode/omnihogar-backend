@@ -23,7 +23,8 @@ public static class DispatchNotifier
         IApplicationDbContext context,
         Order order,
         ILogger? logger,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Guid? actorUserId = null)
     {
         var dispatch = order.Dispatch;
         if (dispatch is null)
@@ -44,6 +45,7 @@ public static class DispatchNotifier
             return true;
         }
 
+        var added = new List<Notification>();
         try
         {
             var recipientIds = await context.Users
@@ -59,7 +61,7 @@ public static class DispatchNotifier
             var content = $"Pedido {order.OrderNumber} listo para despacho.";
             foreach (var recipientId in recipientIds)
             {
-                context.Notifications.Add(new Notification
+                added.Add(new Notification
                 {
                     UserId = recipientId,
                     OrderId = order.Id,
@@ -70,6 +72,7 @@ public static class DispatchNotifier
                 });
             }
 
+            context.Notifications.AddRange(added);
             dispatch.NotifiedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
             return true;
@@ -77,8 +80,12 @@ public static class DispatchNotifier
         catch (Exception ex)
         {
             logger?.LogError(ex, "No se pudo notificar el inicio de despacho del pedido {OrderId}.", order.Id);
-            // Still persist the opened Dispatch row so the order stays flagged/pending of
-            // notification rather than losing the transition.
+            // Drop whatever this attempt left pending, then record the failure (HU-26 crit. 3)
+            // for the user who made the change and still persist the opened Dispatch row, so the
+            // order stays flagged/pending of notification rather than losing the transition.
+            context.Notifications.RemoveRange(added);
+            dispatch.NotifiedAt = null;
+            await OrderStatusNotifier.RecordFailureAsync(context, order, actorUserId, ex.Message, logger, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return false;
         }

@@ -84,22 +84,25 @@ public class UpdateOrderStatusCommandHandlerTests
 
     // --- HU-13: entering "preparing" opens the Dispatch and notifies the despacho team ---
 
-    private static async Task<Guid> AddDespachoUserAsync(InMemoryApplicationDbContext context, bool active = true)
+    private static async Task<Guid> AddUserWithRoleAsync(InMemoryApplicationDbContext context, Guid roleId, bool active = true)
     {
         var user = new User
         {
             UserType = UserType.employee,
             FirstName = "Diego",
-            LastName = "Coordinador",
+            LastName = "Interno",
             Email = $"{Guid.NewGuid()}@example.com",
             PasswordHash = "h",
             Status = active,
         };
         context.Users.Add(user);
-        context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = SeededRoleIds.CoordinadorDeDespacho });
+        context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = roleId });
         await context.SaveChangesAsync(CancellationToken.None);
         return user.Id;
     }
+
+    private static Task<Guid> AddDespachoUserAsync(InMemoryApplicationDbContext context, bool active = true) =>
+        AddUserWithRoleAsync(context, SeededRoleIds.CoordinadorDeDespacho, active);
 
     [Fact]
     public async Task TransitionToPreparing_OpensDispatchAndNotifiesDespachoTeam()
@@ -137,7 +140,12 @@ public class UpdateOrderStatusCommandHandlerTests
 
         var dispatch = await context.Dispatches.SingleAsync(d => d.OrderId == order.Id);
         Assert.Null(dispatch.NotifiedAt);
-        Assert.Empty(await context.Notifications.ToListAsync());
+
+        // HU-26 crit. 3: the failure is recorded (for the user who made the change), not lost.
+        var failure = await context.Notifications.SingleAsync();
+        Assert.Equal("failed", failure.DeliveryStatus);
+        Assert.Equal(dispatcherId, failure.UserId);
+        Assert.Contains(order.OrderNumber, failure.Content);
     }
 
     [Fact]
@@ -149,5 +157,80 @@ public class UpdateOrderStatusCommandHandlerTests
         var result = await handler.Handle(new UpdateOrderStatusCommand(order.Id, "packed", null), CancellationToken.None);
 
         Assert.Null(result.DispatchNotified);
+    }
+
+    // --- HU-26: every relevant status change notifies its internal areas ---
+
+    private static UpdateOrderStatusCommandHandler HandlerFor(InMemoryApplicationDbContext context, Guid actorId) =>
+        new(context, CreateMapper(), new FakeCurrentUserService { UserId = actorId.ToString() });
+
+    [Fact]
+    public async Task TransitionToPacked_NotifiesDespachoAndAdminWithOrderAndChange_ButNotOtherAreas()
+    {
+        var (context, order, actorId) = await Seed("preparing");
+        var despachoId = await AddUserWithRoleAsync(context, SeededRoleIds.CoordinadorDeDespacho);
+        var adminId = await AddUserWithRoleAsync(context, SeededRoleIds.Administrador);
+        var bodegaId = await AddUserWithRoleAsync(context, SeededRoleIds.JefeDeBodega);
+
+        await HandlerFor(context, actorId).Handle(new UpdateOrderStatusCommand(order.Id, "packed", null), CancellationToken.None);
+
+        var notifications = await context.Notifications.ToListAsync();
+        Assert.Equal(2, notifications.Count);
+        Assert.Contains(notifications, n => n.UserId == despachoId);
+        Assert.Contains(notifications, n => n.UserId == adminId);
+        Assert.DoesNotContain(notifications, n => n.UserId == bodegaId);
+        Assert.All(notifications, n =>
+        {
+            Assert.Equal("order_status_changed", n.Type);
+            Assert.Equal("in_app", n.Channel);
+            Assert.Equal("sent", n.DeliveryStatus);
+            Assert.Equal(order.Id, n.OrderId);
+            Assert.Contains("ORD-900", n.Content);
+            Assert.Contains("Preparando", n.Content);
+            Assert.Contains("Empacado", n.Content);
+        });
+    }
+
+    [Fact]
+    public async Task TransitionToCancelled_NotifiesBodegaDespachoAndAsesor()
+    {
+        var (context, order, actorId) = await Seed("payment_approved");
+        var bodegaId = await AddUserWithRoleAsync(context, SeededRoleIds.JefeDeBodega);
+        var despachoId = await AddUserWithRoleAsync(context, SeededRoleIds.CoordinadorDeDespacho);
+        var asesorId = await AddUserWithRoleAsync(context, SeededRoleIds.AsesorDeTienda);
+
+        await HandlerFor(context, actorId).Handle(new UpdateOrderStatusCommand(order.Id, "cancelled", null), CancellationToken.None);
+
+        var recipients = (await context.Notifications.Select(n => n.UserId).ToListAsync()).ToHashSet();
+        Assert.Equal(new HashSet<Guid> { bodegaId, despachoId, asesorId }, recipients);
+    }
+
+    [Fact]
+    public async Task InactiveUsersOfTheArea_AreNotNotified()
+    {
+        var (context, order, actorId) = await Seed("preparing");
+        var activeId = await AddDespachoUserAsync(context);
+        await AddDespachoUserAsync(context, active: false);
+
+        await HandlerFor(context, actorId).Handle(new UpdateOrderStatusCommand(order.Id, "packed", null), CancellationToken.None);
+
+        var notification = await context.Notifications.SingleAsync();
+        Assert.Equal(activeId, notification.UserId);
+    }
+
+    [Fact]
+    public async Task NotifiableTransition_WithNoRecipients_RecordsFailedNotificationForActor_AndStillChangesStatus()
+    {
+        var (context, order, actorId) = await Seed("preparing");
+
+        var result = await HandlerFor(context, actorId).Handle(new UpdateOrderStatusCommand(order.Id, "packed", null), CancellationToken.None);
+
+        Assert.Equal("packed", result.Status);
+        var failure = await context.Notifications.SingleAsync();
+        Assert.Equal("failed", failure.DeliveryStatus);
+        Assert.Equal(actorId, failure.UserId);
+        Assert.Equal(order.Id, failure.OrderId);
+        Assert.Contains("No se pudo notificar", failure.Content);
+        Assert.Contains("ORD-900", failure.Content);
     }
 }

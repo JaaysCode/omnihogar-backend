@@ -80,4 +80,24 @@ public class GetMyNotificationsQueryTests
         Assert.Equal("ORD-700", result[0].OrderNumber);
         Assert.False(result[0].IsRead);
     }
+
+    [Fact]
+    public async Task FailedNotification_ExposesItsDeliveryStatus()
+    {
+        var (context, user) = await SeedUser();
+        context.Notifications.Add(new Notification
+        {
+            UserId = user.Id,
+            Type = "order_status_changed",
+            Channel = "in_app",
+            Content = "No se pudo notificar el cambio del pedido ORD-700: sin destinatarios.",
+            DeliveryStatus = "failed",
+        });
+        await context.SaveChangesAsync(CancellationToken.None);
+
+        var handler = new GetMyNotificationsQueryHandler(context, new FakeCurrentUserService { UserId = user.Id.ToString() }, CreateMapper());
+        var result = await handler.Handle(new GetMyNotificationsQuery(), CancellationToken.None);
+
+        Assert.Equal("failed", Assert.Single(result).DeliveryStatus);
+    }
 }

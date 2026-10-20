@@ -641,7 +641,7 @@ namespace OmniHogar.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_notifications_delivery_status", "delivery_status IN ('pending','sent','failed')");
 
-                            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered','dispatch_ready')");
+                            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered','dispatch_ready','order_status_changed')");
                         });
                 });
 

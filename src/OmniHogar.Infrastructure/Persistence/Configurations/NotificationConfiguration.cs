@@ -10,7 +10,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
     {
         builder.ToTable("notifications", t =>
         {
-            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered','dispatch_ready')");
+            t.HasCheckConstraint("CK_notifications_type", "type IN ('order_confirmed','payment_approved','in_dispatch','delivered','dispatch_ready','order_status_changed')");
             t.HasCheckConstraint("CK_notifications_channel", "channel IN ('email','whatsapp','sms','in_app')");
             t.HasCheckConstraint("CK_notifications_delivery_status", "delivery_status IN ('pending','sent','failed')");
         });

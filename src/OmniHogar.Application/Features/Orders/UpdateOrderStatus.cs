@@ -127,9 +127,16 @@ public class UpdateOrderStatusCommandHandler : IRequestHandler<UpdateOrderStatus
         // open the Dispatch record and notify the despacho team in-app. Best-effort: a failure
         // here doesn't roll back or fail this request (crit. 3), see DispatchNotifier.
         bool? dispatchNotified = null;
+        var actorUserId = Guid.Parse(_currentUser.UserId!);
         if (request.NewStatus == "preparing")
         {
-            dispatchNotified = await DispatchNotifier.NotifyAsync(_context, order, _logger, cancellationToken);
+            dispatchNotified = await DispatchNotifier.NotifyAsync(_context, order, _logger, cancellationToken, actorUserId);
+        }
+        else
+        {
+            // HU-26: every other relevant change notifies its internal areas, best-effort.
+            await OrderStatusNotifier.NotifyAsync(
+                _context, order, previousStatus, request.NewStatus, actorUserId, _logger, cancellationToken);
         }
 
         var dto = _mapper.Map<OrderDetailDto>(order);
