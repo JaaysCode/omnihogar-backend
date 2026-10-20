@@ -101,6 +101,15 @@ public class OrdersController : ControllerBase
     {
         return await _sender.Send(new GetMyOrderTrackingQuery(id), cancellationToken);
     }
+
+    /// <summary>Payment receipt of one of the authenticated customer's own orders (HU-20). 400
+    /// with the transaction status when the payment was not approved; 404 when it isn't theirs.</summary>
+    [HttpGet("mine/{id:guid}/receipt")]
+    [Authorize]
+    public async Task<ActionResult<OrderReceiptDto>> GetMineReceipt(Guid id, CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetMyOrderReceiptQuery(id), cancellationToken);
+    }
 }
 
 /// <summary>Request body for <see cref="OrdersController.RegisterStoreSale"/>.</summary>
