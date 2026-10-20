@@ -132,4 +132,62 @@ public class SendChatMessageCommandHandlerTests
         Assert.Null(result.MatchedProducts);
         Assert.Empty(context.Orders);
     }
+
+    // --- HU-28: consultar disponibilidad ---
+
+    [Fact]
+    public async Task CheckAvailability_WithStock_RepliesWithUnitsAndCreatesNothing()
+    {
+        var (context, user, llm, _, _) = await Seed(available: 7, productName: "Taladro");
+        llm.IntentToReturn = new ChatIntent(ChatIntentType.CheckAvailability, ProductQuery: "taladro");
+
+        var result = await Handler(context, user, llm).Handle(
+            new SendChatMessageCommand(null, "¿hay taladros?", []), CancellationToken.None);
+
+        Assert.Contains("Taladro", result.Reply);
+        Assert.Contains("7 unidades disponibles", result.Reply);
+        Assert.Single(result.MatchedProducts!);
+        Assert.Null(result.OrderCreated);
+        Assert.Empty(context.Orders);
+        Assert.Empty(context.InventoryMovements);
+    }
+
+    [Fact]
+    public async Task CheckAvailability_ProductWithoutStock_SaysThereAreNoUnits()
+    {
+        var (context, user, llm, _, _) = await Seed(available: 0, productName: "Taladro");
+        llm.IntentToReturn = new ChatIntent(ChatIntentType.CheckAvailability, ProductQuery: "taladro");
+
+        var result = await Handler(context, user, llm).Handle(
+            new SendChatMessageCommand(null, "¿hay taladros?", []), CancellationToken.None);
+
+        Assert.Contains("sin existencias", result.Reply);
+    }
+
+    [Fact]
+    public async Task CheckAvailability_UnknownProduct_TellsNotFoundAndInvitesAnotherQuery()
+    {
+        var (context, user, llm, _, _) = await Seed(available: 5, productName: "Taladro");
+        llm.IntentToReturn = new ChatIntent(ChatIntentType.CheckAvailability, ProductQuery: "nevera");
+
+        var result = await Handler(context, user, llm).Handle(
+            new SendChatMessageCommand(null, "¿hay neveras?", []), CancellationToken.None);
+
+        Assert.Contains("No encontré el producto \"nevera\"", result.Reply);
+        Assert.Contains("consultar otro", result.Reply);
+        Assert.Empty(result.MatchedProducts!);
+    }
+
+    [Fact]
+    public async Task CheckAvailability_WithoutAProductName_AsksWhichProduct()
+    {
+        var (context, user, llm, _, _) = await Seed(available: 5);
+        llm.IntentToReturn = new ChatIntent(ChatIntentType.CheckAvailability, ProductQuery: "  ");
+
+        var result = await Handler(context, user, llm).Handle(
+            new SendChatMessageCommand(null, "¿qué hay?", []), CancellationToken.None);
+
+        Assert.Contains("¿De qué producto", result.Reply);
+        Assert.Null(result.MatchedProducts);
+    }
 }

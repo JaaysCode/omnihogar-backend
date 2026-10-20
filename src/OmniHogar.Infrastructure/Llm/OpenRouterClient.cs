@@ -24,7 +24,7 @@ public class OpenRouterClient : ILlmClient
     private const string SystemPrompt = """
         Eres el asistente de compras de OmniHogar. Tu única tarea es interpretar el último
         mensaje del cliente y devolver SOLO un objeto JSON, sin texto adicional, con esta forma:
-        {"type": "search_product" | "recommend_products" | "confirm_order" | "unknown", "productQuery": string o null, "quantity": number o null, "keywords": [string] o null}
+        {"type": "search_product" | "recommend_products" | "check_availability" | "confirm_order" | "unknown", "productQuery": string o null, "quantity": number o null, "keywords": [string] o null}
 
         - "search_product": el cliente menciona o describe un producto que quiere buscar o
           agregar a su pedido. Extrae en "productQuery" el nombre o palabra clave del producto
@@ -36,6 +36,9 @@ public class OpenRouterClient : ILlmClient
           Pon en "keywords" de 1 a 6 palabras clave en español, en minúscula y en singular,
           con los tipos de producto, usos o categorías que encajan con lo pedido (incluye
           sinónimos). Deja "productQuery" en null.
+        - "check_availability": el cliente pregunta si hay existencias, cuántas unidades hay o
+          si está disponible un producto (por ejemplo "¿hay taladros?", "¿cuántas sillas quedan?").
+          Extrae en "productQuery" el nombre o palabra clave del producto, sin relleno.
         - "confirm_order": el cliente confirma que quiere finalizar o confirmar su pedido actual
           (por ejemplo "sí, confírmalo", "eso es todo", "confirma el pedido").
         - "unknown": saludo, charla, o cualquier mensaje que no identifique un producto ni
@@ -105,6 +108,7 @@ public class OpenRouterClient : ILlmClient
         {
             "search_product" => new ChatIntent(ChatIntentType.SearchProduct, intent.ProductQuery, intent.Quantity),
             "recommend_products" => new ChatIntent(ChatIntentType.RecommendProducts, Keywords: intent.Keywords),
+            "check_availability" => new ChatIntent(ChatIntentType.CheckAvailability, intent.ProductQuery),
             "confirm_order" => new ChatIntent(ChatIntentType.ConfirmOrder),
             _ => new ChatIntent(ChatIntentType.Unknown),
         };

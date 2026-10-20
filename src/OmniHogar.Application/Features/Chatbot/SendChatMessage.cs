@@ -110,6 +110,19 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
                 reply = ComposeRecommendationReply(intent.Keywords, matchedProducts);
                 break;
 
+            case ChatIntentType.CheckAvailability:
+                // HU-28: read-only — reuses the catalog search (which already sums stock per product).
+                if (string.IsNullOrWhiteSpace(intent.ProductQuery))
+                {
+                    reply = "¿De qué producto quieres consultar la disponibilidad?";
+                }
+                else
+                {
+                    matchedProducts = await _searchProducts.Handle(new SearchProductsQuery(intent.ProductQuery, null), cancellationToken);
+                    reply = ComposeAvailabilityReply(intent.ProductQuery, matchedProducts);
+                }
+                break;
+
             case ChatIntentType.ConfirmOrder:
                 (reply, orderCreated) = await ConfirmOrderAsync(conversation, request.DraftItems, customerId, cancellationToken);
                 break;
@@ -168,6 +181,25 @@ public class SendChatMessageCommandHandler : IRequestHandler<SendChatMessageComm
         var lines = matches.Select(p => $"- {p.Name}: ${p.Price:N0}");
 
         return $"Te recomiendo estos productos:\n{string.Join("\n", lines)}\n¿Quieres agregar alguno a tu pedido? Dime cuál y cuántas unidades.";
+    }
+
+    private static string ComposeAvailabilityReply(string query, List<ProductDto> matches)
+    {
+        if (matches.Count == 0)
+        {
+            return $"No encontré el producto \"{query}\" en el catálogo. ¿Quieres consultar otro?";
+        }
+
+        var lines = matches.Select(p =>
+        {
+            var stock = p.AvailableQuantity ?? 0;
+            var availability = stock > 0
+                ? $"{stock} {(stock == 1 ? "unidad disponible" : "unidades disponibles")}"
+                : "sin existencias por ahora";
+            return $"- {p.Name}: {availability}";
+        });
+
+        return $"Esta es la disponibilidad:\n{string.Join("\n", lines)}\n¿Quieres consultar otro producto o agregar alguno a tu pedido?";
     }
 
     private static List<ChatDraftItemDto> BuildDraftDto(IReadOnlyList<DraftItemInput> items, Dictionary<Guid, Product> products)

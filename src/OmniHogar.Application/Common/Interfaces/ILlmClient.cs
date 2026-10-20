@@ -4,6 +4,7 @@ public enum ChatIntentType
 {
     SearchProduct,
     RecommendProducts,
+    CheckAvailability,
     ConfirmOrder,
     Unknown,
 }
