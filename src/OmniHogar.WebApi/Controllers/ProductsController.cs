@@ -69,6 +69,15 @@ public class ProductsController : ControllerBase
         return await _sender.Send(new GetProductsStockQuery(ids), cancellationToken);
     }
 
+    /// <summary>Low-stock alerts (HU-24): every product/facility whose available units are at or
+    /// below its configured minimum level.</summary>
+    [HttpGet("stock/alerts")]
+    [Authorize(Policy = AppPermissions.InventarioConsultar)]
+    public async Task<ActionResult<List<StockAlertDto>>> GetStockAlerts(CancellationToken cancellationToken)
+    {
+        return await _sender.Send(new GetStockAlertsQuery(), cancellationToken);
+    }
+
     [HttpPost]
     [Authorize(Policy = AppPermissions.ProductosGestionar)]
     public async Task<ActionResult<Guid>> Create(CreateProductCommand command, CancellationToken cancellationToken)
@@ -83,6 +92,15 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> AddStock(Guid id, AddStockRequestDto body, CancellationToken cancellationToken)
     {
         await _sender.Send(new AddProductStockCommand(id, body.Quantity, body.Reason), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Configure the minimum stock level of a product at a facility (HU-24).</summary>
+    [HttpPut("{id:guid}/stock/minimum")]
+    [Authorize(Policy = AppPermissions.InventarioAjustar)]
+    public async Task<IActionResult> SetMinimumStock(Guid id, SetMinimumStockRequestDto body, CancellationToken cancellationToken)
+    {
+        await _sender.Send(new SetInventoryMinimumStockCommand(id, body.FacilityId, body.MinimumStock), cancellationToken);
         return NoContent();
     }
 
@@ -110,3 +128,5 @@ public class ProductsController : ControllerBase
 
 /// <summary>Request body for <see cref="ProductsController.AddStock"/> — ProductId comes from the route.</summary>
 public record AddStockRequestDto(int Quantity, string? Reason);
+
+public record SetMinimumStockRequestDto(Guid FacilityId, int MinimumStock);

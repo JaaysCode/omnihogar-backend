@@ -39,6 +39,7 @@ public class GetProductStockQueryHandler : IRequestHandler<GetProductStockQuery,
                 FacilityType = i.Facility.Type,
                 City = i.Facility.City,
                 AvailableQuantity = i.AvailableQuantity,
+                MinimumStock = i.MinimumStock,
             })
             .ToListAsync(cancellationToken);
 

@@ -30,4 +30,7 @@ public class FacilityStockDto
     public FacilityType FacilityType { get; set; }
     public string City { get; set; } = string.Empty;
     public int AvailableQuantity { get; set; }
+
+    /// <summary>Configured minimum level (HU-24). 0 means no minimum has been configured.</summary>
+    public int MinimumStock { get; set; }
 }
